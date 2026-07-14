@@ -1,4 +1,4 @@
-accessWidener v2 named
+accessWidener v2 official
 
 accessible field net/minecraft/client/gui/screens/inventory/SmithingScreen ARMOR_STAND_TRANSLATION Lorg/joml/Vector3f;
 accessible field net/minecraft/client/gui/screens/inventory/SmithingScreen ARMOR_STAND_ANGLE Lorg/joml/Quaternionf;
@@ -28,5 +28,3 @@ accessible field net/minecraft/world/item/SpawnEggItem BY_ID Ljava/util/Map;
 
 accessible field net/minecraft/world/level/storage/loot/LootTable functions Ljava/util/List;
 accessible field net/minecraft/world/level/storage/loot/LootTable pools Ljava/util/List;
-
-
