@@ -35,10 +35,10 @@ loom {
 dependencies {
     minecraft 'com.mojang:minecraft:26.2'
 
-    modImplementation 'net.fabricmc:fabric-loader:0.19.3'
-    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.154.2+26.2'
+    implementation 'net.fabricmc:fabric-loader:0.19.3'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.154.2+26.2'
 
-    modImplementation fileTree(dir: '../SophisticatedCore/port-26.2/build/libs', include: ['sophisticatedcore-*.jar'])
+    implementation fileTree(dir: '../SophisticatedCore/port-26.2/build/libs', include: ['sophisticatedcore-*.jar'])
 
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
