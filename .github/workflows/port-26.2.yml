@@ -1,0 +1,71 @@
+name: Port 26.2 diagnostic build
+
+on:
+  push:
+    branches:
+      - agent/port-26.2
+  pull_request:
+    branches:
+      - 1.21.x-fabric
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-backpacks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out Sophisticated Backpacks
+        uses: actions/checkout@v4
+
+      - name: Check out Sophisticated Core port
+        uses: actions/checkout@v4
+        with:
+          repository: goakiller900/SophisticatedCore
+          ref: agent/port-26.2
+          path: SophisticatedCore
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle 9.5.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+
+      - name: Build Sophisticated Core port
+        id: core
+        continue-on-error: true
+        shell: bash
+        run: |
+          gradle -p SophisticatedCore/port-26.2 jar --no-daemon --console=plain > core-port-26.2-build.log 2>&1
+
+      - name: Compile Sophisticated Backpacks port
+        id: backpacks
+        if: steps.core.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          gradle -p port-26.2 compileJava --no-daemon --console=plain > backpacks-port-26.2-build.log 2>&1
+
+      - name: Upload diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: port-26.2-build-logs
+          path: |
+            core-port-26.2-build.log
+            backpacks-port-26.2-build.log
+          if-no-files-found: warn
+
+      - name: Report compiler result
+        if: steps.core.outcome == 'failure' || steps.backpacks.outcome == 'failure'
+        run: |
+          echo 'Minecraft 26.2 compilation failed. See the port-26.2-build-logs artifact.'
+          exit 1
