@@ -1,5 +1,6 @@
 import net.fabricmc.loom.util.gradle.SourceSetHelper
 import net.fabricmc.loom.util.gradle.SourceSetReference
+import groovy.json.JsonSlurper
 
 buildscript {
     repositories {
@@ -37,17 +38,6 @@ repositories {
 
     maven { url = "https://maven.fabricmc.net/" } // FAPI, Loader
     maven { url = "https://maven.quiltmc.org/repository/release" } // QM
-    maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/Salandora/Porting-Lib")
-        credentials {
-            username = System.getenv("USERNAME")
-            password = System.getenv("READ_PACKAGES_TOKEN")
-        }
-        content {
-            includeGroupByRegex "io.github.fabricators_of_create.Porting-Lib.*"
-        }
-    }
     maven { url = "https://mvn.devos.one/snapshots/" } // Create, Porting Lib
     maven { url = "https://mvn.devos.one/releases/" } // Porting Lib
 
@@ -91,17 +81,6 @@ repositories {
     }
     // maven { url = "https://maven.resourcefulbees.com/repository/maven-public/" } // Chipped, resourcefullib, athena
     maven { url = "https://maven.teamresourceful.com/repository/maven-public/" } // Chipped, resourcefullib, athena
-    maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/Salandora/SophisticatedCore")
-        credentials {
-            username = System.getenv("USERNAME")
-            password = System.getenv("READ_PACKAGES_TOKEN")
-        }
-        content {
-            includeGroupByRegex "sophisticatedcore.*"
-        }
-    }
 }
 
 group = mod_group_id
@@ -110,6 +89,17 @@ logger.lifecycle("${project.name} version: ${project.version}")
 
 base {
     archivesName = "${mod_id}"
+}
+
+// Loom cannot discover injected-interface metadata from an included composite
+// project's outgoing classes variant. Supply the same Core interface contract
+// as a local, build-only mod source set for adjacent-repository development.
+// CI consumes Core's published mod JAR and therefore uses Core's own metadata.
+def useLocalCoreComposite = System.getenv("CI") == null
+if (useLocalCoreComposite) {
+    sourceSets.create("localCoreInterfaceInjection") {
+        resources.srcDir("gradle/local-core-interface-injection")
+    }
 }
 
 fabricApi {
@@ -121,6 +111,12 @@ fabricApi {
 
 loom {
     runtimeOnlyLog4j = true
+
+    if (useLocalCoreComposite) {
+        interfaceInjection {
+            interfaceInjectionSourceSets.add(sourceSets.localCoreInterfaceInjection)
+        }
+    }
 
     accessWidenerPath = file ("src/main/resources/${mod_id}.accesswidener")
 
@@ -254,6 +250,26 @@ test {
     }
 }
 
+if (useLocalCoreComposite) {
+    tasks.register("verifyLocalCoreInterfaceContract") {
+        def coreMetadata = file("../SophisticatedCore/src/main/resources/fabric.mod.json")
+        def localContract = file("gradle/local-core-interface-injection/fabric.mod.json")
+        inputs.files(coreMetadata, localContract)
+
+        doLast {
+            def parser = new JsonSlurper()
+            def coreInterfaces = parser.parse(coreMetadata).custom["loom:injected_interfaces"]
+            def localInterfaces = parser.parse(localContract).custom["loom:injected_interfaces"]
+            if (coreInterfaces != localInterfaces) {
+                throw new GradleException("The local SophisticatedCore injected-interface contract is out of sync with ${coreMetadata}")
+            }
+        }
+    }
+    tasks.named("check").configure {
+        dependsOn("verifyLocalCoreInterfaceContract")
+    }
+}
+
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
     it.options.release = 25
@@ -302,7 +318,7 @@ processResources {
             minecraft_version   : project.minecraft_version,
             loader_version      : project.loader_version,
             fabric_version      : project.fabric_version,
-            sc_version          : mavenVersionToFabric(project.sc_version),
+            sc_version          : mavenVersionToFabric(project.sc_fabric_version),
             forge_config_version: project.forge_config_api_port_version,
             energy_version      : project.energy_version,
             jei_version         : project.jei_version
@@ -339,21 +355,44 @@ tasks.register('fixIntelliJResources', Copy) {
 }
 
 static def mavenVersionToFabric(String version) {
-    StringBuilder builder = new StringBuilder()
-    if (version.startsWith("[")) {
-        builder.append(">=")
-    } else {
-        builder.append(">")
+    String specification = version?.trim()
+    if (!specification) {
+        throw new IllegalArgumentException("Version specification must not be empty")
     }
-    builder.append(version.substring(1, version.lastIndexOf(',')))
 
-    if (version.endsWith(')')) {
-        builder.append(" <")
-    } else {
-        builder.append(" <=")
+    boolean startsRange = specification.startsWith('[') || specification.startsWith('(')
+    boolean endsRange = specification.endsWith(']') || specification.endsWith(')')
+    if (!startsRange && !endsRange) {
+        // A bare Maven version is also a valid exact Fabric predicate.
+        return specification
     }
-    builder.append(version.substring(version.lastIndexOf(',') + 1, version.length() - 1))
-    return builder.toString()
+    if (!startsRange || !endsRange) {
+        throw new IllegalArgumentException("Malformed Maven version range: ${specification}")
+    }
+
+    String range = specification.substring(1, specification.length() - 1).trim()
+    int comma = range.indexOf(',')
+    if (comma < 0) {
+        if (specification.startsWith('[') && specification.endsWith(']') && !range.isEmpty()) {
+            // Maven's [version] form denotes exactly one version.
+            return range
+        }
+        throw new IllegalArgumentException("Malformed Maven version range: ${specification}")
+    }
+    if (range.indexOf(',', comma + 1) >= 0) {
+        throw new IllegalArgumentException("Disjoint Maven version ranges are not supported: ${specification}")
+    }
+
+    String lower = range.substring(0, comma).trim()
+    String upper = range.substring(comma + 1).trim()
+    List<String> predicates = []
+    if (!lower.isEmpty()) {
+        predicates.add((specification.startsWith('[') ? '>=' : '>') + lower)
+    }
+    if (!upper.isEmpty()) {
+        predicates.add((specification.endsWith(']') ? '<=' : '<') + upper)
+    }
+    return predicates.isEmpty() ? '*' : predicates.join(' ')
 }
 
 static def getBuildNumber() {

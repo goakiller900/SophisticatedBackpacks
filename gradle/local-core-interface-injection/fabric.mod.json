@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "sophisticatedcore_local_interface_contract",
+  "version": "1",
+  "name": "SophisticatedCore local interface contract",
+  "environment": "*",
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/client/gui/screens/inventory/AbstractContainerScreen": ["net/p3pp3rf1y/sophisticatedcore/extensions/client/gui/screens/inventory/SophisticatedAbstractContainerScreen"],
+      "net/minecraft/world/entity/Entity": ["net/p3pp3rf1y/sophisticatedcore/extensions/entity/SophisticatedEntity"],
+      "net/minecraft/world/entity/player/Player": ["net/p3pp3rf1y/sophisticatedcore/extensions/entity/SophisticatedPlayer"],
+      "net/minecraft/world/inventory/Slot": ["net/p3pp3rf1y/sophisticatedcore/extensions/inventory/SophisticatedSlot"],
+      "net/minecraft/world/item/Item": ["net/p3pp3rf1y/sophisticatedcore/extensions/item/SophisticatedItem"],
+      "net/minecraft/world/item/ItemStack": ["net/p3pp3rf1y/sophisticatedcore/extensions/item/SophisticatedItemStack", "net/p3pp3rf1y/sophisticatedcore/extensions/component/SophisticatedMutableDataComponentHolder"],
+      "net/minecraft/world/level/Level": ["net/p3pp3rf1y/sophisticatedcore/extensions/world/SophisticatedLevel"],
+      "net/minecraft/world/level/block/Block": ["net/p3pp3rf1y/sophisticatedcore/extensions/block/SophisticatedBlock"],
+      "net/minecraft/world/level/block/state/BlockState": ["net/p3pp3rf1y/sophisticatedcore/extensions/block/SophisticatedBlockState"],
+      "net/minecraft/world/level/block/entity/BlockEntity": ["net/p3pp3rf1y/sophisticatedcore/extensions/block/entity/SophisticatedBlockEntity"],
+      "net/minecraft/core/component/DataComponentHolder": ["net/p3pp3rf1y/sophisticatedcore/extensions/component/SophisticatedDataComponentHolder"],
+      "net/minecraft/world/item/component/ItemContainerContents": ["net/p3pp3rf1y/sophisticatedcore/extensions/item/component/SophisticatedItemContainerContents"]
+    }
+  }
+}

@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  packages: read
 
 jobs:
   build:
@@ -49,36 +48,68 @@ jobs:
           chmod +x workspace/SophisticatedCore/gradlew
           chmod +x workspace/SophisticatedBackpacks/gradlew
 
-      # Core's Gradle version is generated as:
-      #   <minecraft_version>-<mod_version>.<GITHUB_RUN_NUMBER>
-      # Publish that exact build to Maven Local, then force Backpacks to use the
-      # exact local version. This avoids resolving the dynamic Core version range
-      # against the old authenticated GitHub Packages repository.
+      # Ask Gradle for the project version instead of duplicating Core's version
+      # calculation in shell. GITHUB_RUN_NUMBER and GITHUB_REF are already part
+      # of the Actions environment used by Core's Gradle build.
       - name: Determine SophisticatedCore CI version
         id: core-version
         working-directory: workspace/SophisticatedCore
         shell: bash
         run: |
-          CORE_MC_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
-          CORE_MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
-          CORE_VERSION="${CORE_MC_VERSION}-${CORE_MOD_VERSION}.${GITHUB_RUN_NUMBER}"
+          CORE_VERSION=$(./gradlew -q properties --property version | sed -n 's/^version: //p' | tail -n 1)
+          if [[ -z "$CORE_VERSION" ]]; then
+            echo "Unable to determine SophisticatedCore's Gradle project version" >&2
+            exit 1
+          fi
           echo "core_version=${CORE_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Using SophisticatedCore version: ${CORE_VERSION}"
+          echo "Gradle reports SophisticatedCore version: ${CORE_VERSION}"
 
       - name: Build and publish SophisticatedCore locally
         working-directory: workspace/SophisticatedCore
-        env:
-          USERNAME: ${{ github.actor }}
-          GITHUB_USERNAME: ${{ github.actor }}
-          READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN || github.token }}
         run: ./gradlew clean build publishToMavenLocal --stacktrace
+
+      - name: Verify locally published SophisticatedCore coordinates
+        working-directory: workspace/SophisticatedCore
+        shell: bash
+        env:
+          CORE_VERSION: ${{ steps.core-version.outputs.core_version }}
+        run: |
+          CORE_GROUP=$(sed -n 's/^mod_group_id=//p' gradle.properties | tr -d '\r' | xargs)
+          CORE_ARTIFACT=$(sed -n 's/^mod_id=//p' gradle.properties | tr -d '\r' | xargs)
+          CORE_REPOSITORY_PATH="$HOME/.m2/repository/${CORE_GROUP//.//}/${CORE_ARTIFACT}/${CORE_VERSION}"
+          CORE_JAR="${CORE_REPOSITORY_PATH}/${CORE_ARTIFACT}-${CORE_VERSION}.jar"
+          test -f "${CORE_REPOSITORY_PATH}/${CORE_ARTIFACT}-${CORE_VERSION}.pom"
+          test -f "$CORE_JAR"
+          test -f "${CORE_REPOSITORY_PATH}/${CORE_ARTIFACT}-${CORE_VERSION}.module"
+          jar tf "$CORE_JAR" | grep -Fx 'sophisticatedcore.mixins.json'
+          jar tf "$CORE_JAR" | grep -Fx 'sophisticatedcore.accesswidener'
+          unzip -p "$CORE_JAR" fabric.mod.json | grep -F '"loom:injected_interfaces"'
+          unzip -p "$CORE_JAR" fabric.mod.json | grep -F 'net/p3pp3rf1y/sophisticatedcore/extensions/item/SophisticatedItemStack'
+          unzip -p "$CORE_JAR" fabric.mod.json | grep -F 'net/p3pp3rf1y/sophisticatedcore/extensions/entity/SophisticatedPlayer'
+          echo "Verified ${CORE_GROUP}:${CORE_ARTIFACT}:${CORE_VERSION} in Maven Local"
 
       - name: Build SophisticatedBackpacks JARs
         working-directory: workspace/SophisticatedBackpacks
+        run: ./gradlew clean build "-Psc_version=${{ steps.core-version.outputs.core_version }}" --stacktrace
+
+      - name: Audit remapped SophisticatedBackpacks JAR
+        working-directory: workspace/SophisticatedBackpacks
+        shell: bash
         env:
-          USERNAME: ${{ github.actor }}
-          READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN || github.token }}
-        run: ./gradlew clean build -Psc_version=${{ steps.core-version.outputs.core_version }} --stacktrace
+          CORE_VERSION: ${{ steps.core-version.outputs.core_version }}
+        run: |
+          MAIN_JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' -print -quit)
+          test -n "$MAIN_JAR"
+          jar tf "$MAIN_JAR" | grep -Fx 'fabric.mod.json'
+          jar tf "$MAIN_JAR" | grep -Fx 'sophisticatedbackpacks.mixins.json'
+          jar tf "$MAIN_JAR" | grep -Fx 'sophisticatedbackpacks.accesswidener'
+          jar tf "$MAIN_JAR" | grep -Fx 'assets/sophisticatedbackpacks/items/backpack.json'
+          if unzip -p "$MAIN_JAR" fabric.mod.json | grep -Fq "$CORE_VERSION"; then
+            echo "The distributable must not require one CI-specific Core build" >&2
+            exit 1
+          fi
+          unzip -p "$MAIN_JAR" fabric.mod.json | grep -F '"sophisticatedcore": ">=26.2-1.2.9.21 <26.3"'
+          echo "Audited remapped JAR: $MAIN_JAR"
 
       - name: List generated JARs
         if: success()
