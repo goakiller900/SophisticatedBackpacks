@@ -1,71 +1,102 @@
-name: Build
-on: [ workflow_dispatch, push ]
+name: Build JARs
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+permissions:
+  contents: write
+  packages: read
+
 jobs:
   build:
+    name: Build SophisticatedBackpacks
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout SophisticatedBackpacks
         uses: actions/checkout@v4
         with:
-          fetch-depth: 200
-      - name: Set up JDK 21
+          path: workspace/SophisticatedBackpacks
+          fetch-depth: 0
+
+      # settings.gradle uses ../SophisticatedCore as a composite build, so Core
+      # must exist beside Backpacks on the GitHub Actions runner as well.
+      - name: Checkout SophisticatedCore
+        uses: actions/checkout@v4
+        with:
+          repository: goakiller900/SophisticatedCore
+          ref: 1.21.x-fabric
+          path: workspace/SophisticatedCore
+          fetch-depth: 0
+
+      - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
-          java-version: 21
           distribution: zulu
+          java-version: '25'
           cache: gradle
-      - name: Loom Cache
-        uses: actions/cache@v4
-        with:
-          path: "**/.gradle/loom-cache"
-          key: "${{ runner.os }}-gradle-${{ hashFiles('**/libs.versions.*', '**/*.gradle*', '**/gradle-wrapper.properties') }}"
-          restore-keys: "${{ runner.os }}-gradle-"
-      - uses: gradle/actions/wrapper-validation@v4
-      - run: chmod +x ./gradlew
-      - name: Build with Gradle
+          cache-dependency-path: |
+            workspace/SophisticatedBackpacks/**/*.gradle*
+            workspace/SophisticatedBackpacks/gradle/wrapper/gradle-wrapper.properties
+            workspace/SophisticatedCore/**/*.gradle*
+            workspace/SophisticatedCore/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Make Gradle wrapper executable
+        working-directory: workspace/SophisticatedBackpacks
+        run: chmod +x ./gradlew
+
+      - name: Build JARs
+        working-directory: workspace/SophisticatedBackpacks
         env:
-          USERNAME: ${{ secrets.USERNAME }}
-          READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN }}
-        run: ./gradlew build
-      - name: Read minecraft version from gradle.properties
-        id: read-version
+          USERNAME: ${{ github.actor }}
+          READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN || github.token }}
+        run: ./gradlew clean build --stacktrace
+
+      - name: List generated JARs
+        if: success()
+        working-directory: workspace/SophisticatedBackpacks
+        run: ls -lah build/libs/*.jar
+
+      - name: Read project version
+        if: success()
+        id: version
+        working-directory: workspace/SophisticatedBackpacks
+        shell: bash
         run: |
-          minecraft_version=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2)
-          echo "minecraft_version=$minecraft_version" >> $GITHUB_ENV
-      - name: Upload Build Artifacts
+          MINECRAFT_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
+          MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
+          RELEASE_TAG="v${MINECRAFT_VERSION}-${MOD_VERSION}-build.${GITHUB_RUN_NUMBER}"
+          echo "minecraft_version=${MINECRAFT_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "mod_version=${MOD_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload compiled JARs
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: SophisticatedBackpacks-${{ env.minecraft_version }}
-          path: build/libs
-      - name: Publish to Github Packages
+          name: SophisticatedBackpacks-${{ steps.version.outputs.minecraft_version }}-${{ steps.version.outputs.mod_version }}-build.${{ github.run_number }}
+          path: workspace/SophisticatedBackpacks/build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 30
+
+      # A normal push or pull request only builds and stores the JARs under
+      # GitHub Actions. A manual "Run workflow" additionally creates a tagged
+      # GitHub Release and attaches every generated JAR.
+      - name: Create tagged GitHub Release and attach JARs
+        if: github.event_name == 'workflow_dispatch' && success()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew publish
-      - name: Cleanup old artifacts
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'sophisticatedbackpacks.sophisticatedbackpacks'
-          package-type: 'maven'
-          min-versions-to-keep: 10
-      - name: Publish to CurseForge
-        env:
-          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+          MINECRAFT_VERSION: ${{ steps.version.outputs.minecraft_version }}
+          MOD_VERSION: ${{ steps.version.outputs.mod_version }}
+        shell: bash
         run: |
-          BRANCH_NAME=${GITHUB_REF##*/}
-          if [[ "$BRANCH_NAME" =~ ^[0-9]+\.[0-9]+\.([0-9]+|x)-fabric$ ]]; then
-            ./gradlew curseforge
-          else
-            echo "Branch name does not match the pattern: $BRANCH_NAME. Skipping CurseForge upload."
-            exit 0
-          fi
-      - name: Publish to Modrinth
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: |
-          BRANCH_NAME=${GITHUB_REF##*/}
-          if [[ "$BRANCH_NAME" =~ ^[0-9]+\.[0-9]+\.([0-9]+|x)-fabric$ ]]; then
-            ./gradlew modrinth
-          else
-            echo "Branch name does not match the pattern: $BRANCH_NAME. Skipping Modrinth upload."
-            exit 0
-          fi
+          gh release create "$RELEASE_TAG" workspace/SophisticatedBackpacks/build/libs/*.jar \
+            --target "$GITHUB_SHA" \
+            --title "SophisticatedBackpacks ${MINECRAFT_VERSION}-${MOD_VERSION} (Build ${GITHUB_RUN_NUMBER})" \
+            --generate-notes
