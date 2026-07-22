@@ -21,8 +21,6 @@ jobs:
           path: workspace/SophisticatedBackpacks
           fetch-depth: 0
 
-      # settings.gradle uses ../SophisticatedCore as a composite build, so Core
-      # must exist beside Backpacks on the GitHub Actions runner as well.
       - name: Checkout SophisticatedCore
         uses: actions/checkout@v4
         with:
@@ -46,11 +44,24 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
-      - name: Make Gradle wrapper executable
-        working-directory: workspace/SophisticatedBackpacks
-        run: chmod +x ./gradlew
+      - name: Make Gradle wrappers executable
+        run: |
+          chmod +x workspace/SophisticatedCore/gradlew
+          chmod +x workspace/SophisticatedBackpacks/gradlew
 
-      - name: Build JARs
+      # Backpacks relies on Loom injected interfaces declared by Core in
+      # fabric.mod.json. A Gradle composite source substitution does not expose
+      # those injected interfaces to Backpacks' Minecraft compile classpath in
+      # CI, so build the real Core mod JAR and publish it to Maven Local first.
+      - name: Build and publish SophisticatedCore locally
+        working-directory: workspace/SophisticatedCore
+        env:
+          USERNAME: ${{ github.actor }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN || github.token }}
+        run: ./gradlew clean build publishToMavenLocal --stacktrace
+
+      - name: Build SophisticatedBackpacks JARs
         working-directory: workspace/SophisticatedBackpacks
         env:
           USERNAME: ${{ github.actor }}
@@ -84,9 +95,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # A normal push or pull request only builds and stores the JARs under
-      # GitHub Actions. A manual "Run workflow" additionally creates a tagged
-      # GitHub Release and attaches every generated JAR.
       - name: Create tagged GitHub Release and attach JARs
         if: github.event_name == 'workflow_dispatch' && success()
         env:
