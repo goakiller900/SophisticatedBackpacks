@@ -104,11 +104,27 @@ jobs:
           jar tf "$MAIN_JAR" | grep -Fx 'sophisticatedbackpacks.mixins.json'
           jar tf "$MAIN_JAR" | grep -Fx 'sophisticatedbackpacks.accesswidener'
           jar tf "$MAIN_JAR" | grep -Fx 'assets/sophisticatedbackpacks/items/backpack.json'
-          if unzip -p "$MAIN_JAR" fabric.mod.json | grep -Fq "$CORE_VERSION"; then
-            echo "The distributable must not require one CI-specific Core build" >&2
-            exit 1
-          fi
-          unzip -p "$MAIN_JAR" fabric.mod.json | grep -F '"sophisticatedcore": ">=26.2-1.2.9.21 <26.3"'
+          python3 - "$MAIN_JAR" "$CORE_VERSION" <<'PY'
+          import json
+          import sys
+          import zipfile
+
+          jar_path, ci_core_version = sys.argv[1:]
+          with zipfile.ZipFile(jar_path) as jar_file:
+              metadata = json.loads(jar_file.read("fabric.mod.json"))
+
+          expected_core_dependency = ">=26.2-1.2.9.21 <26.3"
+          actual_core_dependency = metadata.get("depends", {}).get("sophisticatedcore")
+          if actual_core_dependency != expected_core_dependency:
+              raise SystemExit(
+                  "Unexpected SophisticatedCore dependency predicate: "
+                  f"{actual_core_dependency!r}; expected {expected_core_dependency!r}"
+              )
+          if actual_core_dependency == ci_core_version:
+              raise SystemExit("The distributable must not require one CI-specific Core build")
+
+          print(f"Verified SophisticatedCore dependency predicate: {actual_core_dependency}")
+          PY
           echo "Audited remapped JAR: $MAIN_JAR"
 
       - name: List generated JARs
