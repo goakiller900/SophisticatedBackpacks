@@ -6,10 +6,13 @@ pluginManagement {
     }
 }
 
-// Use the migrated Core directly during development. The substitution keeps the
-// normal published SophisticatedCore coordinate intact for release builds.
-includeBuild("../SophisticatedCore") {
-    dependencySubstitution {
-        substitute module("sophisticatedcore:sophisticatedcore") using project(":")
+// Use the migrated Core directly during local development. In CI, Core is first
+// built and published to Maven Local so Loom can consume the real remapped mod
+// JAR and apply Core's injected interfaces to Minecraft classes.
+if (System.getenv("CI") == null) {
+    includeBuild("../SophisticatedCore") {
+        dependencySubstitution {
+            substitute module("sophisticatedcore:sophisticatedcore") using project(":")
+        }
     }
 }
