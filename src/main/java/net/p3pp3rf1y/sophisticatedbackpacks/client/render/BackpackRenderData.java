@@ -20,12 +20,28 @@ public record BackpackRenderData(ItemStack stack, RenderInfo renderInfo, int mai
 		ItemStack stack;
 		boolean wearsArmor = false;
 		if (entity instanceof AbstractClientPlayer player) {
-			var rendered = PlayerInventoryProvider.get().getBackpackFromRendered(player);
-			if (rendered.isEmpty()) {
-				return null;
+			/*
+			 * The chest slot is the native 26.2 equip path.  Resolve it before the
+			 * optional-inventory provider: integrations are allowed to add rendered
+			 * handlers and may return no render info for a slot they own.  The old
+			 * indirect lookup could therefore leave a backpack in CHEST with no
+			 * BackpackRenderData, while the item model was still visible in the
+			 * player's equipment/inventory view.
+			 */
+			ItemStack chestStack = player.getItemBySlot(EquipmentSlot.CHEST);
+			if (chestStack.getItem() instanceof BackpackItem) {
+				stack = chestStack;
+				// This flag means armor worn underneath the backpack, not the
+				// backpack's own equipment slot.
+				wearsArmor = false;
+			} else {
+				var rendered = PlayerInventoryProvider.get().getBackpackFromRendered(player);
+				if (rendered.isEmpty()) {
+					return null;
+				}
+				stack = rendered.get().getBackpack();
+				wearsArmor = !rendered.get().isArmorSlot() && !chestStack.isEmpty();
 			}
-			stack = rendered.get().getBackpack();
-			wearsArmor = !rendered.get().isArmorSlot() && !player.getItemBySlot(EquipmentSlot.CHEST).isEmpty();
 		} else {
 			stack = entity.getItemBySlot(EquipmentSlot.CHEST);
 			if (!(stack.getItem() instanceof BackpackItem)) {

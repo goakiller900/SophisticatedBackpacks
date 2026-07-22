@@ -9,7 +9,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -91,6 +93,20 @@ public class BackpackItem extends ItemBase implements IStashStorageItem {
 		this.numberOfSlots = numberOfSlots;
 		this.numberOfUpgradeSlots = numberOfUpgradeSlots;
 		this.blockSupplier = blockSupplier;
+	}
+
+	@Override
+	public Component getName(ItemStack stack) {
+		/*
+		 * Item.Properties' dependant description id is resolved through the
+		 * intrusive 26.2 registry holder.  Backpack stacks can be constructed
+		 * while the deferred registry is being populated, which made the
+		 * creative-tab entries fall back to the first backpack's description.
+		 * Resolve the already-registered item key here so each tier always uses
+		 * its own existing language entry.
+		 */
+		Identifier id = BuiltInRegistries.ITEM.getKey(this);
+		return Component.translatable("item." + id.getNamespace() + "." + id.getPath());
 	}
 
 	public static void setColors(ItemStack backpackStack, int mainColor, int accentColor) {
