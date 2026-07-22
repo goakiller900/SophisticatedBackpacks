@@ -12,7 +12,11 @@ public class DepositUpgradeItem extends UpgradeItemBase<DepositUpgradeWrapper> {
 	private final IntSupplier filterSlotCount;
 
 	public DepositUpgradeItem(IntSupplier filterSlotCount) {
-		super(Config.SERVER.maxUpgradesPerStorage);
+		this(filterSlotCount, new Properties());
+	}
+
+	public DepositUpgradeItem(IntSupplier filterSlotCount, Properties properties) {
+		super(Config.SERVER.maxUpgradesPerStorage, properties);
 		this.filterSlotCount = filterSlotCount;
 	}
 

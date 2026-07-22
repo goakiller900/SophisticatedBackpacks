@@ -6,14 +6,9 @@
     }
   ],
   "type": "sophisticatedbackpacks:backpack_upgrade",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:gold_backpack"
-    },
-    "D": {
-      "tag": "c:gems/diamond"
-    }
+    "B": "sophisticatedbackpacks:gold_backpack",
+    "D": "#c:gems/diamond"
   },
   "pattern": [
     "DDD",
@@ -21,7 +16,6 @@
     "DDD"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:diamond_backpack"
   }
 }

@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageFluidHandler;
 
 import javax.annotation.Nonnull;
@@ -79,8 +79,8 @@ public class InceptionFluidHandler implements IStorageFluidHandler {
 				}
 			} else {
 				long amountDrained = fluidHandler.extract(stackToDrain, ctx, ignoreInOutLimit).getAmount();
-				stackToDrain.shrink(amountDrained);
-				drainedStack.grow(amountDrained);
+				stackToDrain.setAmount(stackToDrain.getAmount() - amountDrained);
+				drainedStack.setAmount(drainedStack.getAmount() + amountDrained);
 				if (drainedStack.getAmount() == maxDrain) {
 					return drainedStack;
 				}

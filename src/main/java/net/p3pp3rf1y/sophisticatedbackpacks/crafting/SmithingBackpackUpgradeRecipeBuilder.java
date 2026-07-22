@@ -3,24 +3,27 @@ package net.p3pp3rf1y.sophisticatedbackpacks.crafting;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.p3pp3rf1y.sophisticatedcore.crafting.HoldingRecipeOutput;
 
 import java.util.function.Function;
 
 public class SmithingBackpackUpgradeRecipeBuilder extends SmithingTransformRecipeBuilder {
-	private final Function<SmithingTransformRecipe, ? extends SmithingTransformRecipe> factory;
+	private final Function<SmithingTransformRecipe, ? extends Recipe<?>> factory;
 
-	public SmithingBackpackUpgradeRecipeBuilder(Function<SmithingTransformRecipe, ? extends SmithingTransformRecipe> factory, Ingredient template, Ingredient base, Ingredient addition, Item result) {
-		super(template, base, addition, RecipeCategory.MISC, result);
+	public SmithingBackpackUpgradeRecipeBuilder(Function<SmithingTransformRecipe, ? extends Recipe<?>> factory, Ingredient template, Ingredient base, Ingredient addition, Item result) {
+		super(template, base, addition, RecipeCategory.MISC, new ItemStackTemplate(result));
 		this.factory = factory;
 	}
 
 	@Override
-	public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+	public void save(RecipeOutput recipeOutput, ResourceKey<Recipe<?>> id) {
 		HoldingRecipeOutput holdingRecipeOutput = new HoldingRecipeOutput(recipeOutput.advancement());
 		super.save(holdingRecipeOutput, id);
 		if (!(holdingRecipeOutput.getRecipe() instanceof SmithingTransformRecipe compose)) {

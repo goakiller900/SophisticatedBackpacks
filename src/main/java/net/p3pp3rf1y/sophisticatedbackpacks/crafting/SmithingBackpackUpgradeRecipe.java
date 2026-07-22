@@ -1,10 +1,14 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.crafting;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.PlacementInfo;
+import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipeInput;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.RecipeDisplay;
+import net.minecraft.world.level.Level;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackItem;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
@@ -14,12 +18,12 @@ import net.p3pp3rf1y.sophisticatedcore.crafting.IWrapperRecipe;
 import net.p3pp3rf1y.sophisticatedcore.crafting.RecipeWrapperSerializer;
 
 import java.util.Optional;
+import java.util.List;
 
-public class SmithingBackpackUpgradeRecipe extends SmithingTransformRecipe implements IWrapperRecipe<SmithingTransformRecipe> {
+public class SmithingBackpackUpgradeRecipe implements SmithingRecipe, IWrapperRecipe<SmithingTransformRecipe> {
 	private final SmithingTransformRecipe compose;
 
 	public SmithingBackpackUpgradeRecipe(SmithingTransformRecipe compose) {
-		super(compose.template, compose.base, compose.addition, compose.result);
 		this.compose = compose;
 	}
 
@@ -29,8 +33,8 @@ public class SmithingBackpackUpgradeRecipe extends SmithingTransformRecipe imple
 	}
 
 	@Override
-	public ItemStack assemble(SmithingRecipeInput inv, HolderLookup.Provider registryAccess) {
-		ItemStack upgradedBackpack = result.copy();
+	public ItemStack assemble(SmithingRecipeInput inv) {
+		ItemStack upgradedBackpack = compose.assemble(inv);
 		if (SophisticatedCore.isLogicalServerThread()) {
 			getBackpack(inv).map(ItemStack::getComponents).ifPresent(upgradedBackpack::applyComponents);
 			IBackpackWrapper wrapper = BackpackWrapper.fromStack(upgradedBackpack);
@@ -49,7 +53,7 @@ public class SmithingBackpackUpgradeRecipe extends SmithingTransformRecipe imple
 	}
 
 	@Override
-	public RecipeSerializer<?> getSerializer() {
+	public RecipeSerializer<SmithingBackpackUpgradeRecipe> getSerializer() {
 		return ModItems.SMITHING_BACKPACK_UPGRADE_RECIPE_SERIALIZER.get();
 	}
 
@@ -58,9 +62,39 @@ public class SmithingBackpackUpgradeRecipe extends SmithingTransformRecipe imple
 		return compose;
 	}
 
-	public static class Serializer extends RecipeWrapperSerializer<SmithingTransformRecipe, SmithingBackpackUpgradeRecipe> {
-		public Serializer() {
-			super(SmithingBackpackUpgradeRecipe::new, RecipeSerializer.SMITHING_TRANSFORM);
-		}
+	@Override
+	public Optional<Ingredient> templateIngredient() {
+		return compose.templateIngredient();
 	}
+
+	@Override
+	public Ingredient baseIngredient() {
+		return compose.baseIngredient();
+	}
+
+	@Override
+	public Optional<Ingredient> additionIngredient() {
+		return compose.additionIngredient();
+	}
+
+	@Override
+	public boolean showNotification() {
+		return compose.showNotification();
+	}
+
+	@Override
+	public String group() {
+		return compose.group();
+	}
+
+	@Override
+	public PlacementInfo placementInfo() {
+		return compose.placementInfo();
+	}
+
+	@Override
+	public List<RecipeDisplay> display() {
+		return compose.display();
+	}
+
 }

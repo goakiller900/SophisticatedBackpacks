@@ -1,26 +1,21 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.data;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
-import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SpecialRecipeBuilder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
-import net.p3pp3rf1y.sophisticatedbackpacks.compat.chipped.ChippedCompat;
 import net.p3pp3rf1y.sophisticatedbackpacks.crafting.*;
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems;
-import net.p3pp3rf1y.sophisticatedcore.compat.CompatModIds;
-import net.p3pp3rf1y.sophisticatedcore.compat.chipped.BlockTransformationUpgradeItem;
-import net.p3pp3rf1y.sophisticatedcore.crafting.ShapeBasedRecipeBuilder;
 import net.p3pp3rf1y.sophisticatedcore.crafting.UpgradeNextTierRecipe;
 import net.p3pp3rf1y.sophisticatedcore.util.RegistryHelper;
 
@@ -30,12 +25,21 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 	private static final String HAS_UPGRADE_BASE = "has_upgrade_base";
 	private static final String HAS_SMELTING_UPGRADE = "has_smelting_upgrade";
 
-	public SBPRecipeProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+	public SBPRecipeProvider(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
 		super(output, registriesFuture);
 	}
 
 	@Override
-	public void buildRecipes(RecipeOutput recipeOutput) {
+	public String getName() {
+		return "Sophisticated Backpacks Recipes";
+	}
+
+	@Override
+	protected RecipeProvider createRecipeProvider(HolderLookup.Provider registries, RecipeOutput recipeOutput) {
+		return new RecipeProvider(registries, recipeOutput) {
+		@Override
+		public void buildRecipes() {
+		ShapeBasedRecipeBuilder.Factory ShapeBasedRecipeBuilder = net.p3pp3rf1y.sophisticatedbackpacks.data.ShapeBasedRecipeBuilder.factory(registries.lookupOrThrow(Registries.ITEM));
 		ShapeBasedRecipeBuilder.shaped(ModItems.BACKPACK.get(), BasicBackpackRecipe::new)
 				.pattern("SLS")
 				.pattern("SCS")
@@ -43,7 +47,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('L', ConventionalItemTags.LEATHERS)
 				.define('C', ConventionalItemTags.WOODEN_CHESTS)
 				.define('S', ConventionalItemTags.STRINGS)
-				.unlockedBy("has_leather", hasLeather())
+				.unlockedBy("has_leather", has(ConventionalItemTags.LEATHERS))
 				.save(recipeOutput);
 
 		SpecialRecipeBuilder.special(BackpackDyeRecipe::new).save(recipeOutput, SophisticatedBackpacks.getRegistryName("backpack_dye"));
@@ -82,7 +86,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('I', ConventionalItemTags.IRON_INGOTS)
 				.define('B', ModItems.COPPER_BACKPACK.get())
 				.unlockedBy("has_copper_backpack", has(ModItems.COPPER_BACKPACK.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("iron_backpack_from_copper"));
+				.save(recipeOutput, recipeKey("iron_backpack_from_copper"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.COPPER_BACKPACK.get(), BackpackUpgradeRecipe::new)
 				.pattern("CCC")
@@ -113,7 +117,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('L', ConventionalItemTags.LEATHERS)
 				.define('I', ConventionalItemTags.IRON_INGOTS)
 				.define('S', ConventionalItemTags.STRINGS)
-				.unlockedBy("has_leather", hasLeather())
+				.unlockedBy("has_leather", has(ConventionalItemTags.LEATHERS))
 				.save(recipeOutput);
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.ADVANCED_PICKUP_UPGRADE.get(), UpgradeNextTierRecipe::new)
@@ -179,7 +183,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('R', ConventionalItemTags.REDSTONE_DUSTS)
 				.define('M', ModItems.MAGNET_UPGRADE.get())
 				.unlockedBy("has_magnet_upgrade", has(ModItems.MAGNET_UPGRADE.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("advanced_magnet_upgrade_from_basic"));
+				.save(recipeOutput, recipeKey("advanced_magnet_upgrade_from_basic"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.FEEDING_UPGRADE.get())
 				.pattern(" C ")
@@ -397,7 +401,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('S', ModItems.STACK_UPGRADE_STARTER_TIER.get())
 				.define('I', ConventionalItemTags.STORAGE_BLOCKS_IRON)
 				.unlockedBy("has_stack_upgrade_starter_tier", has(ModItems.STACK_UPGRADE_STARTER_TIER.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("stack_upgrade_tier_1_from_starter"));
+				.save(recipeOutput, recipeKey("stack_upgrade_tier_1_from_starter"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.STACK_UPGRADE_TIER_2.get())
 				.pattern("GGG")
@@ -594,7 +598,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('S', ModItems.SMELTING_UPGRADE.get())
 				.define('L', ItemTags.LOGS)
 				.unlockedBy(HAS_SMELTING_UPGRADE, has(ModItems.SMELTING_UPGRADE.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("smoking_upgrade_from_smelting_upgrade"));
+				.save(recipeOutput, recipeKey("smoking_upgrade_from_smelting_upgrade"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.AUTO_SMOKING_UPGRADE.get(), UpgradeNextTierRecipe::new)
 				.pattern("DHD")
@@ -615,7 +619,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('S', ModItems.AUTO_SMELTING_UPGRADE.get())
 				.define('L', ItemTags.LOGS)
 				.unlockedBy("has_auto_smelting_upgrade", has(ModItems.AUTO_SMELTING_UPGRADE.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("auto_smoking_upgrade_from_auto_smelting_upgrade"));
+				.save(recipeOutput, recipeKey("auto_smoking_upgrade_from_auto_smelting_upgrade"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.BLASTING_UPGRADE.get())
 				.pattern("RIR")
@@ -636,7 +640,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('I', ConventionalItemTags.IRON_INGOTS)
 				.define('T', Items.SMOOTH_STONE)
 				.unlockedBy(HAS_SMELTING_UPGRADE, has(ModItems.SMELTING_UPGRADE.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("blasting_upgrade_from_smelting_upgrade"));
+				.save(recipeOutput, recipeKey("blasting_upgrade_from_smelting_upgrade"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.AUTO_BLASTING_UPGRADE.get(), UpgradeNextTierRecipe::new)
 				.pattern("DHD")
@@ -658,7 +662,7 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 				.define('I', ConventionalItemTags.IRON_INGOTS)
 				.define('T', Items.SMOOTH_STONE)
 				.unlockedBy("has_auto_smelting_upgrade", has(ModItems.AUTO_SMELTING_UPGRADE.get()))
-				.save(recipeOutput, SophisticatedBackpacks.getRL("auto_blasting_upgrade_from_auto_smelting_upgrade"));
+				.save(recipeOutput, recipeKey("auto_blasting_upgrade_from_auto_smelting_upgrade"));
 
 		ShapeBasedRecipeBuilder.shaped(ModItems.ANVIL_UPGRADE.get())
 				.pattern("ADA")
@@ -686,35 +690,13 @@ public class SBPRecipeProvider extends FabricRecipeProvider {
 		new SmithingBackpackUpgradeRecipeBuilder(SmithingBackpackUpgradeRecipe::new, Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE), Ingredient.of(ModItems.DIAMOND_BACKPACK.get()),
 				Ingredient.of(Items.NETHERITE_INGOT), ModItems.NETHERITE_BACKPACK.get())
 				.unlocks("has_diamond_backpack", has(ModItems.DIAMOND_BACKPACK.get()))
-				.save(recipeOutput, RegistryHelper.getItemKey(ModItems.NETHERITE_BACKPACK.get()));
+				.save(recipeOutput, ResourceKey.create(Registries.RECIPE, RegistryHelper.getItemKey(ModItems.NETHERITE_BACKPACK.get())));
 
-		addChippedUpgradeRecipes(recipeOutput);
+		}
+		};
 	}
 
-	private void addChippedUpgradeRecipes(RecipeOutput recipeOutput) {
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.BOTANIST_WORKBENCH_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.BOTANIST_WORKBENCH.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.GLASSBLOWER_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.GLASSBLOWER.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.CARPENTERS_TABLE_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.CARPENTERS_TABLE.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.LOOM_TABLE_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.LOOM_TABLE.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.MASON_TABLE_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.MASON_TABLE.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.ALCHEMY_BENCH_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.ALCHEMY_BENCH.get());
-		addChippedUpgradeRecipe(recipeOutput, ChippedCompat.TINKERING_TABLE_UPGRADE.get(), earth.terrarium.chipped.common.registry.ModBlocks.TINKERING_TABLE.get());
-	}
-
-	private void addChippedUpgradeRecipe(RecipeOutput recipeOutput, BlockTransformationUpgradeItem upgrade, Block workbench) {
-		ShapeBasedRecipeBuilder.shaped(upgrade)
-				.pattern(" W ")
-				.pattern("IBI")
-				.pattern(" R ")
-				.define('B', ModItems.UPGRADE_BASE.get())
-				.define('R', ConventionalItemTags.REDSTONE_DUSTS)
-				.define('I', ConventionalItemTags.IRON_INGOTS)
-				.define('W', workbench)
-				.unlockedBy(HAS_UPGRADE_BASE, has(ModItems.UPGRADE_BASE.get()))
-				.save(withConditions(recipeOutput, ResourceConditions.allModsLoaded(CompatModIds.CHIPPED)));
-	}
-
-	private static Criterion<?> hasLeather() {
-		return inventoryTrigger(ItemPredicate.Builder.item().of(ConventionalItemTags.LEATHERS).build());
+	private static ResourceKey<net.minecraft.world.item.crafting.Recipe<?>> recipeKey(String path) {
+		return ResourceKey.create(Registries.RECIPE, SophisticatedBackpacks.getRL(path));
 	}
 }

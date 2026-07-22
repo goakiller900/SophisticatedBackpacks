@@ -2,9 +2,7 @@
 /**
  * Implementation code for SophisticatedBackpacks.
  */
-@ParametersAreNonnullByDefault @MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
 package net.p3pp3rf1y.sophisticatedbackpacks.compat.litematica;
-
-import net.minecraft.MethodsReturnNonnullByDefault;
 
 import javax.annotation.ParametersAreNonnullByDefault;

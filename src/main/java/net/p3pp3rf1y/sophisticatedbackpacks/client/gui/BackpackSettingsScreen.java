@@ -9,8 +9,22 @@ import net.p3pp3rf1y.sophisticatedcore.client.gui.utils.Position;
 import net.p3pp3rf1y.sophisticatedcore.common.gui.SettingsContainerMenu;
 import net.p3pp3rf1y.sophisticatedcore.network.PacketDistributor;
 import net.p3pp3rf1y.sophisticatedcore.settings.StorageSettingsTabControlBase;
+import net.p3pp3rf1y.sophisticatedcore.settings.itemdisplay.IItemDisplaySettingsPreviewProvider;
+import net.p3pp3rf1y.sophisticatedcore.settings.itemdisplay.ItemDisplaySettingsContainer;
+
+import java.util.Optional;
 
 public class BackpackSettingsScreen extends SettingsScreen {
+	private final IItemDisplaySettingsPreviewProvider itemDisplayPreviewProvider = new IItemDisplaySettingsPreviewProvider() {
+		@Override
+		public Optional<net.minecraft.world.item.ItemStack> getItemDisplaySettingsPreviewStack(SettingsScreen screen,
+				ItemDisplaySettingsContainer container, int selectedSlot) {
+			if (selectedSlot < 0 || selectedSlot >= menu.getStorageWrapper().getInventoryHandler().getSlotCount()) {
+				return Optional.empty();
+			}
+			return Optional.of(menu.getStorageWrapper().getInventoryHandler().getStackInSlot(selectedSlot));
+		}
+	};
 	public BackpackSettingsScreen(SettingsContainerMenu<?> screenContainer, Inventory inv, Component titleIn) {
 		super(screenContainer, inv, titleIn);
 	}
@@ -27,5 +41,10 @@ public class BackpackSettingsScreen extends SettingsScreen {
 	@Override
 	protected void sendStorageInventoryScreenOpenMessage() {
 		PacketDistributor.sendToServer(new BackpackOpenPayload());
+	}
+
+	@Override
+	public IItemDisplaySettingsPreviewProvider getItemDisplaySettingsPreviewProvider() {
+		return itemDisplayPreviewProvider;
 	}
 }

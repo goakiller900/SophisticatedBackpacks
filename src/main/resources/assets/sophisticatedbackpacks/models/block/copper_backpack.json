@@ -1,4 +1,6 @@
 {
-  "loader": "sophisticatedbackpacks:backpack",
-  "clipsTexture": "sophisticatedbackpacks:block/copper_clips"
+  "textures": {
+    "particle": "sophisticatedbackpacks:block/backpack_cloth"
+  },
+  "elements": []
 }

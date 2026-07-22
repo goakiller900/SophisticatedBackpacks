@@ -6,23 +6,12 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "C": {
-      "tag": "c:chests/wooden"
-    },
-    "E": {
-      "tag": "c:ender_pearls"
-    },
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "R": {
-      "tag": "c:dusts/redstone"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "C": "#c:chests/wooden",
+    "E": "#c:ender_pearls",
+    "I": "#c:ingots/iron",
+    "R": "#c:dusts/redstone"
   },
   "pattern": [
     " E ",
@@ -30,7 +19,6 @@
     "RCR"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:refill_upgrade"
   }
 }

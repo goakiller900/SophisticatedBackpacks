@@ -1,13 +1,13 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.upgrades.everlasting;
 
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 @SuppressWarnings("java:S2160") //no need to override equals, the default implementation is good
@@ -21,12 +21,13 @@ public class EverlastingBackpackItemEntity extends ItemEntity {
 		super(type, level);
 		age = 0;
 		setUnlimitedLifetime();
+		setInvulnerable(true);
 		//lifespan = Integer.MAX_VALUE; //set to not despawn
 	}
 
 	@Override
 	public void tick() {
-		if (!level().isClientSide) {
+		if (!level().isClientSide()) {
 			double d0 = getX() + 0.5F - random.nextFloat();
 			double d1 = getY() + random.nextFloat() * 0.5F;
 			double d2 = getZ() + 0.5F - random.nextFloat();
@@ -50,7 +51,7 @@ public class EverlastingBackpackItemEntity extends ItemEntity {
 
 	@Override
 	public boolean isInWater() {
-		return getY() < level().getMinBuildHeight() + 1 || super.isInWater();
+		return getY() < level().getMinY() + 1 || super.isInWater();
 	}
 
 	@Override
@@ -60,11 +61,6 @@ public class EverlastingBackpackItemEntity extends ItemEntity {
 
 	@Override
 	public boolean ignoreExplosion(Explosion explosion) {
-		return true;
-	}
-
-	@Override
-	public boolean isInvulnerableTo(DamageSource source) {
 		return true;
 	}
 
@@ -79,16 +75,16 @@ public class EverlastingBackpackItemEntity extends ItemEntity {
 	}
 
 	@Override
-	public void addAdditionalSaveData(CompoundTag compound) {
-		super.addAdditionalSaveData(compound);
+	protected void addAdditionalSaveData(ValueOutput output) {
+		super.addAdditionalSaveData(output);
 
-		compound.putInt("EverlastingAge", this.age);
+		output.putInt("EverlastingAge", this.age);
 	}
 
 	@Override
-	public void readAdditionalSaveData(CompoundTag compound) {
-		super.readAdditionalSaveData(compound);
+	protected void readAdditionalSaveData(ValueInput input) {
+		super.readAdditionalSaveData(input);
 
-		this.age = compound.getInt("EverlastingAge");
+		this.age = input.getIntOr("EverlastingAge", 0);
 	}
 }

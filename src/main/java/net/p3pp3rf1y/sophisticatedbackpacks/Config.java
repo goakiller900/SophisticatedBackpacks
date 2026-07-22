@@ -1,10 +1,11 @@
 package net.p3pp3rf1y.sophisticatedbackpacks;
 
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeModConfigEvents;
+import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
@@ -112,8 +113,7 @@ public class Config {
 		public final MaxUgradesPerStorageConfig maxUpgradesPerStorage;
 
 		public void initListeners() {
-			NeoForgeModConfigEvents.loading(SophisticatedBackpacks.MOD_ID).register(this::onConfigLoad);
-			NeoForgeModConfigEvents.reloading(SophisticatedBackpacks.MOD_ID).register(this::onConfigReload);
+			ModConfigEvents.reloading(SophisticatedBackpacks.MOD_ID).register(this::onConfigReload);
 		}
 
 		public void onConfigReload(ModConfig modConfig) {
@@ -226,7 +226,7 @@ public class Config {
 			public final ModConfigSpec.ConfigValue<List<? extends String>> entityLootTableList;
 			public final ModConfigSpec.ConfigValue<List<? extends String>> discBlockList;
 			@Nullable
-			private Map<EntityType<?>, ResourceLocation> entityLootTables = null;
+			private Map<EntityType<?>, Identifier> entityLootTables = null;
 
 			public EntityBackpackAdditionsConfig(ModConfigSpec.Builder builder) {
 				builder.comment("Settings for Spawning Entities with Backpack").push("entityBackpackAdditions");
@@ -249,7 +249,7 @@ public class Config {
 				builder.pop();
 			}
 
-			public Optional<ResourceLocation> getLootTableName(EntityType<?> entityType) {
+			public Optional<Identifier> getLootTableName(EntityType<?> entityType) {
 				if (entityLootTables == null) {
 					initEntityLootTables();
 				}
@@ -273,8 +273,8 @@ public class Config {
 					String entityRegistryName = entityLoot[0];
 					String lootTableName = entityLoot[1];
 
-					BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(entityRegistryName))
-							.ifPresent(entityType -> entityLootTables.put(entityType, lootTableName.equals("null") ? null : ResourceLocation.parse(lootTableName)));
+					BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(entityRegistryName))
+							.ifPresent(entityType -> entityLootTables.put(entityType, lootTableName.equals("null") ? null : Identifier.parse(lootTableName)));
 				}
 			}
 
@@ -286,28 +286,28 @@ public class Config {
 			}
 
 			private List<String> getDefaultEntityLootTableList() {
-				return getDefaultEntityLootMapping().entrySet().stream().map(e -> BuiltInRegistries.ENTITY_TYPE.getKey(e.getKey()) + "|" + e.getValue().location()).collect(Collectors.toList());
+				return getDefaultEntityLootMapping().entrySet().stream().map(e -> BuiltInRegistries.ENTITY_TYPE.getKey(e.getKey()) + "|" + e.getValue().identifier()).collect(Collectors.toList());
 			}
 
 			private Map<EntityType<?>, ResourceKey<LootTable>> getDefaultEntityLootMapping() {
 				Map<EntityType<?>, ResourceKey<LootTable>> mapping = new LinkedHashMap<>();
-				mapping.put(EntityType.CREEPER, BuiltInLootTables.DESERT_PYRAMID);
-				mapping.put(EntityType.DROWNED, BuiltInLootTables.SHIPWRECK_TREASURE);
-				mapping.put(EntityType.ENDERMAN, BuiltInLootTables.END_CITY_TREASURE);
-				mapping.put(EntityType.EVOKER, BuiltInLootTables.WOODLAND_MANSION);
-				mapping.put(EntityType.HUSK, BuiltInLootTables.DESERT_PYRAMID);
-				mapping.put(EntityType.PIGLIN, BuiltInLootTables.BASTION_BRIDGE);
-				mapping.put(EntityType.PIGLIN_BRUTE, BuiltInLootTables.BASTION_TREASURE);
-				mapping.put(EntityType.PILLAGER, BuiltInLootTables.PILLAGER_OUTPOST);
-				mapping.put(EntityType.SKELETON, BuiltInLootTables.SIMPLE_DUNGEON);
-				mapping.put(EntityType.STRAY, BuiltInLootTables.IGLOO_CHEST);
-				mapping.put(EntityType.VEX, BuiltInLootTables.WOODLAND_MANSION);
-				mapping.put(EntityType.VINDICATOR, BuiltInLootTables.WOODLAND_MANSION);
-				mapping.put(EntityType.WITCH, BuiltInLootTables.BURIED_TREASURE);
-				mapping.put(EntityType.WITHER_SKELETON, BuiltInLootTables.NETHER_BRIDGE);
-				mapping.put(EntityType.ZOMBIE, BuiltInLootTables.SIMPLE_DUNGEON);
-				mapping.put(EntityType.ZOMBIE_VILLAGER, BuiltInLootTables.VILLAGE_ARMORER);
-				mapping.put(EntityType.ZOMBIFIED_PIGLIN, BuiltInLootTables.BASTION_OTHER);
+				mapping.put(EntityTypes.CREEPER, BuiltInLootTables.DESERT_PYRAMID);
+				mapping.put(EntityTypes.DROWNED, BuiltInLootTables.SHIPWRECK_TREASURE);
+				mapping.put(EntityTypes.ENDERMAN, BuiltInLootTables.END_CITY_TREASURE);
+				mapping.put(EntityTypes.EVOKER, BuiltInLootTables.WOODLAND_MANSION);
+				mapping.put(EntityTypes.HUSK, BuiltInLootTables.DESERT_PYRAMID);
+				mapping.put(EntityTypes.PIGLIN, BuiltInLootTables.BASTION_BRIDGE);
+				mapping.put(EntityTypes.PIGLIN_BRUTE, BuiltInLootTables.BASTION_TREASURE);
+				mapping.put(EntityTypes.PILLAGER, BuiltInLootTables.PILLAGER_OUTPOST);
+				mapping.put(EntityTypes.SKELETON, BuiltInLootTables.SIMPLE_DUNGEON);
+				mapping.put(EntityTypes.STRAY, BuiltInLootTables.IGLOO_CHEST);
+				mapping.put(EntityTypes.VEX, BuiltInLootTables.WOODLAND_MANSION);
+				mapping.put(EntityTypes.VINDICATOR, BuiltInLootTables.WOODLAND_MANSION);
+				mapping.put(EntityTypes.WITCH, BuiltInLootTables.BURIED_TREASURE);
+				mapping.put(EntityTypes.WITHER_SKELETON, BuiltInLootTables.NETHER_BRIDGE);
+				mapping.put(EntityTypes.ZOMBIE, BuiltInLootTables.SIMPLE_DUNGEON);
+				mapping.put(EntityTypes.ZOMBIE_VILLAGER, BuiltInLootTables.VILLAGE_ARMORER);
+				mapping.put(EntityTypes.ZOMBIFIED_PIGLIN, BuiltInLootTables.BASTION_OTHER);
 				return mapping;
 			}
 		}
@@ -362,9 +362,9 @@ public class Config {
 				noInteractionBlocksSet = new HashSet<>();
 
 				for (String disallowedItemName : noInteractionBlocksList.get()) {
-					ResourceLocation registryName = ResourceLocation.parse(disallowedItemName);
+					Identifier registryName = Identifier.parse(disallowedItemName);
 					if (BuiltInRegistries.BLOCK.containsKey(registryName)) {
-						noInteractionBlocksSet.add(BuiltInRegistries.BLOCK.get(registryName));
+						noInteractionBlocksSet.add(BuiltInRegistries.BLOCK.getValue(registryName));
 					}
 				}
 			}
@@ -395,9 +395,9 @@ public class Config {
 				noConnnectionBlocksSet = new HashSet<>();
 
 				for (String disallowedItemName : noConnectionBlocksList.get()) {
-					ResourceLocation registryName = ResourceLocation.parse(disallowedItemName);
+					Identifier registryName = Identifier.parse(disallowedItemName);
 					if (BuiltInRegistries.BLOCK.containsKey(registryName)) {
-						noConnnectionBlocksSet.add(BuiltInRegistries.BLOCK.get(registryName));
+						noConnnectionBlocksSet.add(BuiltInRegistries.BLOCK.getValue(registryName));
 					}
 				}
 			}
@@ -436,7 +436,7 @@ public class Config {
 				disallowedItemsSet = new HashSet<>();
 
 				for (String disallowedItemName : disallowedItemsList.get()) {
-					ResourceLocation registryName = ResourceLocation.parse(disallowedItemName);
+					Identifier registryName = Identifier.parse(disallowedItemName);
 					BuiltInRegistries.ITEM.getOptional(registryName).ifPresent(disallowedItemsSet::add);
 				}
 			}
@@ -462,7 +462,7 @@ public class Config {
 			}
 
 			@Override
-			public int getMaxUpgradesPerStorage(String storageType, @org.jetbrains.annotations.Nullable ResourceLocation upgradeRegistryName) {
+			public int getMaxUpgradesPerStorage(String storageType, @org.jetbrains.annotations.Nullable Identifier upgradeRegistryName) {
 				if (maxUpgradesPerStorage == null) {
 					initMaxUpgradesPerStorage();
 				}

@@ -6,20 +6,11 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "P": {
-      "item": "minecraft:sticky_piston"
-    },
-    "R": {
-      "tag": "c:dusts/redstone"
-    },
-    "S": {
-      "tag": "c:strings"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "P": "minecraft:sticky_piston",
+    "R": "#c:dusts/redstone",
+    "S": "#c:strings"
   },
   "pattern": [
     " P ",
@@ -27,7 +18,6 @@
     "RRR"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:pickup_upgrade"
   }
 }

@@ -1,7 +1,7 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.upgrades.smithing;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -28,7 +28,7 @@ public class SmithingUpgradeContainer extends UpgradeContainerBase<SmithingUpgra
 	private final PersistableSmithingMenu smithingMenuDelegate;
 	public SmithingUpgradeContainer(Player player, int upgradeContainerId, SmithingUpgradeWrapper upgradeWrapper, UpgradeContainerType<SmithingUpgradeWrapper, SmithingUpgradeContainer> type) {
 		super(player, upgradeContainerId, upgradeWrapper, type);
-		smithingMenuDelegate = new PersistableSmithingMenu(new Inventory(player));
+		smithingMenuDelegate = new PersistableSmithingMenu(player.getInventory());
 
 		slots.add(smithingMenuDelegate.getSlot(SmithingMenu.TEMPLATE_SLOT));
 		slots.add(smithingMenuDelegate.getSlot(SmithingMenu.BASE_SLOT));
@@ -45,7 +45,7 @@ public class SmithingUpgradeContainer extends UpgradeContainerBase<SmithingUpgra
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_SHIFT_CLICK_INTO_STORAGE)) {
-			setShiftClickIntoStorage(data.getBoolean(DATA_SHIFT_CLICK_INTO_STORAGE));
+			setShiftClickIntoStorage(data.getBooleanOr(DATA_SHIFT_CLICK_INTO_STORAGE, false));
 		}
 	}
 
@@ -101,7 +101,7 @@ public class SmithingUpgradeContainer extends UpgradeContainerBase<SmithingUpgra
 	}
 
 	@Override
-	public void setRecipeUsed(ResourceLocation recipeId) {
+	public void setRecipeUsed(Identifier recipeId) {
 		smithingMenuDelegate.setSelectedRecipe(recipeId);
 	}
 
@@ -187,9 +187,10 @@ public class SmithingUpgradeContainer extends UpgradeContainerBase<SmithingUpgra
 			return inputSlots;
 		}
 
-		public void setSelectedRecipe(ResourceLocation recipeId) {
+		public void setSelectedRecipe(Identifier recipeId) {
 			SmithingRecipeInput smithingRecipeInput = new SmithingRecipeInput(getTemplateSlot().getItem(), getBaseSlot().getItem(), getAdditionalSlot().getItem());
-			RecipeHelper.safeGetRecipeFor(RecipeType.SMITHING, smithingRecipeInput, recipeId).ifPresent(recipe -> selectedRecipe = recipe);
+			RecipeHelper.safeGetRecipeFor(RecipeType.SMITHING, smithingRecipeInput, recipeId)
+					.ifPresent(recipe -> resultSlots.setItem(0, recipe.value().assemble(smithingRecipeInput)));
 		}
 	}
 }

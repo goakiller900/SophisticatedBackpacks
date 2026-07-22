@@ -36,7 +36,7 @@ public class BackpackSettingsContainerMenu extends SettingsContainerMenu<IBackpa
 
 	@Override
 	public void detectSettingsChangeAndReload() {
-		if (player.level().isClientSide) {
+		if (player.level().isClientSide()) {
 			storageWrapper.getContentsUuid().ifPresent(uuid -> {
 				BackpackStorage storage = BackpackStorage.get();
 				if (storage.removeUpdatedBackpackSettingsFlag(uuid)) {
@@ -54,7 +54,7 @@ public class BackpackSettingsContainerMenu extends SettingsContainerMenu<IBackpa
 	}
 
 	private void sendBackpackSettingsToClient() {
-		if (player.level().isClientSide) {
+		if (player.level().isClientSide()) {
 			return;
 		}
 

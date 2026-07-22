@@ -5,3 +5,11 @@ pluginManagement {
         maven { url = "https://maven.fabricmc.net/" }
     }
 }
+
+// Use the migrated Core directly during development. The substitution keeps the
+// normal published SophisticatedCore coordinate intact for release builds.
+includeBuild("../SophisticatedCore") {
+    dependencySubstitution {
+        substitute module("sophisticatedcore:sophisticatedcore") using project(":")
+    }
+}

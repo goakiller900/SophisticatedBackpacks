@@ -24,7 +24,7 @@ public class AnvilUpgradeContainer extends UpgradeContainerBase<AnvilUpgradeWrap
 	private boolean processingOnTakeLogic = false;
 	public AnvilUpgradeContainer(Player player, int upgradeContainerId, AnvilUpgradeWrapper upgradeWrapper, UpgradeContainerType<AnvilUpgradeWrapper, AnvilUpgradeContainer> type) {
 		super(player, upgradeContainerId, upgradeWrapper, type);
-		anvilMenuDelegate = new PersistableAnvilMenu(new Inventory(player));
+		anvilMenuDelegate = new PersistableAnvilMenu(player.getInventory());
 
 		slots.add(anvilMenuDelegate.getSlot(0));
 		slots.add(anvilMenuDelegate.getSlot(1));
@@ -39,9 +39,9 @@ public class AnvilUpgradeContainer extends UpgradeContainerBase<AnvilUpgradeWrap
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_SHIFT_CLICK_INTO_STORAGE)) {
-			setShiftClickIntoStorage(data.getBoolean(DATA_SHIFT_CLICK_INTO_STORAGE));
+			setShiftClickIntoStorage(data.getBooleanOr(DATA_SHIFT_CLICK_INTO_STORAGE, false));
 		} else if (data.contains("itemName")) {
-			setItemName(data.getString("itemName"));
+			setItemName(data.getStringOr("itemName", ""));
 		}
 	}
 
@@ -94,7 +94,7 @@ public class AnvilUpgradeContainer extends UpgradeContainerBase<AnvilUpgradeWrap
 	private class PersistableAnvilMenu extends AnvilMenu {
 
 		public PersistableAnvilMenu(Inventory playerInventory) {
-			super(0, playerInventory, playerInventory.player.level().isClientSide ? ContainerLevelAccess.NULL : ContainerLevelAccess.create(playerInventory.player.level(), playerInventory.player.blockPosition()));
+			super(0, playerInventory, playerInventory.player.level().isClientSide() ? ContainerLevelAccess.NULL : ContainerLevelAccess.create(playerInventory.player.level(), playerInventory.player.blockPosition()));
 			super.setItemName(upgradeWrapper.getItemName());
 		}
 

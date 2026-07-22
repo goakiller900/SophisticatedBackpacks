@@ -6,14 +6,9 @@
     }
   ],
   "type": "sophisticatedbackpacks:backpack_upgrade",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:backpack"
-    },
-    "I": {
-      "tag": "c:ingots/iron"
-    }
+    "B": "sophisticatedbackpacks:backpack",
+    "I": "#c:ingots/iron"
   },
   "pattern": [
     "III",
@@ -21,7 +16,6 @@
     "III"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:iron_backpack"
   }
 }

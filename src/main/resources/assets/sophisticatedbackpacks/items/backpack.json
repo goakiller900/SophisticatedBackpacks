@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "sophisticatedbackpacks:item/backpack",
+    "model": {
+      "type": "sophisticatedbackpacks:backpack"
+    }
+  }
+}

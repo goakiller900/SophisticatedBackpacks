@@ -15,7 +15,10 @@
         "common.WitherSkullMixin"
     ],
     "client": [
-        "client.ItemInHandRendererMixin"
+        "client.ItemInHandRendererMixin",
+        "client.LivingEntityRenderStateMixin",
+        "client.LivingEntityRendererMixin",
+        "client.MinecraftMixin"
     ],
     "injectors": {
         "defaultRequire": 1

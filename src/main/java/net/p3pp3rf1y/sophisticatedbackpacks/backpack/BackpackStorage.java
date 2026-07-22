@@ -1,18 +1,18 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.backpack;
 
-import io.github.fabricators_of_create.porting_lib.level.events.LevelEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.SavedDataStorage;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackSettingsHandler;
 import net.p3pp3rf1y.sophisticatedcore.SophisticatedCore;
@@ -22,6 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class BackpackStorage extends SavedData {
 	private static final String SAVED_DATA_NAME = SophisticatedBackpacks.MOD_ID;
+	private static final SavedDataType<BackpackStorage> TYPE = new SavedDataType<>(
+			Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, SAVED_DATA_NAME), BackpackStorage::new,
+			CompoundTag.CODEC.xmap(BackpackStorage::load, BackpackStorage::serialize), null);
 
 	private final Map<UUID, CompoundTag> backpackContents = new HashMap<>();
 	private static final BackpackStorage clientStorageCopy = new BackpackStorage();
@@ -36,14 +39,14 @@ public class BackpackStorage extends SavedData {
 			if (server != null) {
 				ServerLevel overworld = server.getLevel(Level.OVERWORLD);
 				//noinspection ConstantConditions - by this time overworld is loaded
-				DimensionDataStorage storage = overworld.getDataStorage();
-				return storage.computeIfAbsent(new Factory<>(BackpackStorage::new, BackpackStorage::load, null), SAVED_DATA_NAME);
+				SavedDataStorage storage = overworld.getDataStorage();
+				return storage.computeIfAbsent(TYPE);
 			}
 		}
 		return clientStorageCopy;
 	}
 
-	public static BackpackStorage load(CompoundTag nbt, HolderLookup.Provider registries) {
+	public static BackpackStorage load(CompoundTag nbt) {
 		BackpackStorage storage = new BackpackStorage();
 		readBackpackContents(nbt, storage);
 		readAccessLogs(nbt, storage);
@@ -51,23 +54,22 @@ public class BackpackStorage extends SavedData {
 	}
 
 	private static void readAccessLogs(CompoundTag nbt, BackpackStorage storage) {
-		for (Tag n : nbt.getList("accessLogRecords", Tag.TAG_COMPOUND)) {
+		for (Tag n : nbt.getListOrEmpty("accessLogRecords")) {
 			AccessLogRecord alr = AccessLogRecord.deserializeFromNBT((CompoundTag) n);
 			storage.accessLogRecords.put(alr.getBackpackUuid(), alr);
 		}
 	}
 
 	private static void readBackpackContents(CompoundTag nbt, BackpackStorage storage) {
-		for (Tag n : nbt.getList("backpackContents", Tag.TAG_COMPOUND)) {
+		for (Tag n : nbt.getListOrEmpty("backpackContents")) {
 			CompoundTag uuidContentsPair = (CompoundTag) n;
-			UUID uuid = NbtUtils.loadUUID(Objects.requireNonNull(uuidContentsPair.get("uuid")));
-			CompoundTag contents = uuidContentsPair.getCompound("contents");
+			UUID uuid = uuidContentsPair.read("uuid", UUIDUtil.CODEC).orElse(new UUID(0, 0));
+			CompoundTag contents = uuidContentsPair.getCompound("contents").orElseGet(CompoundTag::new);
 			storage.backpackContents.put(uuid, contents);
 		}
 	}
 
-	@Override
-	public CompoundTag save(CompoundTag compound, HolderLookup.Provider registries) {
+	private CompoundTag serialize() {
 		CompoundTag ret = new CompoundTag();
 		writeBackpackContents(ret);
 		writeAccessLogs(ret);
@@ -78,7 +80,7 @@ public class BackpackStorage extends SavedData {
 		ListTag backpackContentsNbt = new ListTag();
 		for (Map.Entry<UUID, CompoundTag> entry : backpackContents.entrySet()) {
 			CompoundTag uuidContentsPair = new CompoundTag();
-			uuidContentsPair.put("uuid", NbtUtils.createUUID(entry.getKey()));
+			uuidContentsPair.store("uuid", UUIDUtil.CODEC, entry.getKey());
 			uuidContentsPair.put("contents", entry.getValue());
 			backpackContentsNbt.add(uuidContentsPair);
 		}
@@ -116,7 +118,7 @@ public class BackpackStorage extends SavedData {
 			updatedBackpackSettingsFlags.add(backpackUuid);
 		} else {
 			CompoundTag currentContents = backpackContents.get(backpackUuid);
-			for (String key : contents.getAllKeys()) {
+			for (String key : contents.keySet()) {
 				//noinspection ConstantConditions - the key is one of the tag keys so there's no reason it wouldn't exist here
 				currentContents.put(key, contents.get(key));
 

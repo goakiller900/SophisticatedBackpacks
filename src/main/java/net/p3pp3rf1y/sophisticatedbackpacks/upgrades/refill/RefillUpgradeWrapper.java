@@ -166,7 +166,7 @@ public class RefillUpgradeWrapper extends UpgradeWrapperBase<RefillUpgradeWrappe
 					player.getInventory().add(mainHandItem);
 					return true;
 				} else {
-					player.displayClientMessage(Component.translatable("gui.sophisticatedbackpacks.status.no_space_for_mainhand_item"), true);
+					player.sendOverlayMessage(Component.translatable("gui.sophisticatedbackpacks.status.no_space_for_mainhand_item"));
 					return false;
 				}
 			} else {
@@ -182,7 +182,7 @@ public class RefillUpgradeWrapper extends UpgradeWrapperBase<RefillUpgradeWrappe
 	private boolean canMoveMainHandToInventory(Player player) {
 		int countToAdd = player.getMainHandItem().getCount();
 		for (int slot = 0; slot < player.getInventory().getContainerSize() - 5; slot++) {
-			if (slot == player.getInventory().selected) {
+			if (slot == player.getInventory().getSelectedSlot()) {
 				continue;
 			}
 			ItemStack slotStack = player.getInventory().getItem(slot);

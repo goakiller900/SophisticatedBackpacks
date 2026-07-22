@@ -6,17 +6,10 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "L": {
-      "tag": "c:leathers"
-    },
-    "S": {
-      "tag": "c:strings"
-    }
+    "I": "#c:ingots/iron",
+    "L": "#c:leathers",
+    "S": "#c:strings"
   },
   "pattern": [
     "SIS",
@@ -24,7 +17,6 @@
     "SIS"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:upgrade_base"
   }
 }

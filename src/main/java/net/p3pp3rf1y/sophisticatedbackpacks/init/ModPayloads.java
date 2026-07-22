@@ -8,7 +8,6 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.p3pp3rf1y.sophisticatedbackpacks.compat.litematica.LitematicaPayloads;
 import net.p3pp3rf1y.sophisticatedbackpacks.network.*;
 
 public class ModPayloads {
@@ -27,19 +26,18 @@ public class ModPayloads {
 		registerC2S(BlockPickPayload.TYPE, BlockPickPayload.STREAM_CODEC, BlockPickPayload::handlePayload);
 		registerC2S(RequestPlayerSettingsPayload.TYPE, RequestPlayerSettingsPayload.STREAM_CODEC, RequestPlayerSettingsPayload::handlePayload);
 
-		PayloadTypeRegistry.playS2C().register(BackpackContentsPayload.TYPE, BackpackContentsPayload.STREAM_CODEC);
-		PayloadTypeRegistry.playS2C().register(SyncClientInfoPayload.TYPE, SyncClientInfoPayload.STREAM_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(BackpackContentsPayload.TYPE, BackpackContentsPayload.STREAM_CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(SyncClientInfoPayload.TYPE, SyncClientInfoPayload.STREAM_CODEC);
 
 		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
 			ClientPlayNetworking.registerGlobalReceiver(BackpackContentsPayload.TYPE, BackpackContentsPayload::handlePayload);
 			ClientPlayNetworking.registerGlobalReceiver(SyncClientInfoPayload.TYPE, SyncClientInfoPayload::handlePayload);
 		}
 
-		LitematicaPayloads.registerPackets();
 	}
 
 	public static <T extends CustomPacketPayload> void registerC2S(CustomPacketPayload.Type<T> id, StreamCodec<? super RegistryFriendlyByteBuf, T> codec, ServerPlayNetworking.PlayPayloadHandler<T> handler) {
-		PayloadTypeRegistry.playC2S().register(id, codec);
+		PayloadTypeRegistry.serverboundPlay().register(id, codec);
 		ServerPlayNetworking.registerGlobalReceiver(id, handler);
 	}
 }

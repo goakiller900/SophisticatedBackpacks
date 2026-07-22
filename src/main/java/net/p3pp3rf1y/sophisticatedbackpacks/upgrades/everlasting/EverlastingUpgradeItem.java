@@ -16,7 +16,11 @@ public class EverlastingUpgradeItem extends UpgradeItemBase<EverlastingUpgradeIt
 	public static final List<UpgradeConflictDefinition> UPGRADE_CONFLICT_DEFINITIONS = List.of(new UpgradeConflictDefinition(EverlastingUpgradeItem.class::isInstance, 0, SBPTranslationHelper.INSTANCE.translError("add.everlasting_exists")));
 
 	public EverlastingUpgradeItem() {
-        super(Config.SERVER.maxUpgradesPerStorage);
+		this(new Properties());
+	}
+
+	public EverlastingUpgradeItem(Properties properties) {
+		 super(Config.SERVER.maxUpgradesPerStorage, properties);
     }
 
 	@Override

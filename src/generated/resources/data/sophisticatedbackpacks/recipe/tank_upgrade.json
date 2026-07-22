@@ -6,14 +6,9 @@
     }
   ],
   "type": "sophisticatedcore:upgrade_next_tier",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "G": {
-      "tag": "c:glass_blocks"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "G": "#c:glass_blocks"
   },
   "pattern": [
     "GGG",
@@ -21,7 +16,6 @@
     "GGG"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:tank_upgrade"
   }
 }

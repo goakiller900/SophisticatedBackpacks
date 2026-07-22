@@ -9,7 +9,11 @@ import java.util.List;
 public class AnvilUpgradeItem extends UpgradeItemBase<AnvilUpgradeWrapper> {
 	private static final UpgradeType<AnvilUpgradeWrapper> TYPE = new UpgradeType<>(AnvilUpgradeWrapper::new);
 	public AnvilUpgradeItem() {
-		super(Config.SERVER.maxUpgradesPerStorage);
+		this(new Properties());
+	}
+
+	public AnvilUpgradeItem(Properties properties) {
+		super(Config.SERVER.maxUpgradesPerStorage, properties);
 	}
 
 	@Override

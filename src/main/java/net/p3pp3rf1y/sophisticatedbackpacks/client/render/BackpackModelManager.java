@@ -41,6 +41,10 @@ public class BackpackModelManager {
 		backpackModelProvider.initModels();
 	}
 
+	public static void initModels(BlockEntityRendererProvider.Context context) {
+		backpackModelProvider.initModels(context);
+	}
+
 	public static IBackpackModel getBackpackModel(Item backpackItem) {
 		return backpackModelProvider.getBackpackModel(backpackItem);
 	}

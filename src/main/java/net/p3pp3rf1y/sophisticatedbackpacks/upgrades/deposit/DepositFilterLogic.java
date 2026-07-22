@@ -1,6 +1,5 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.upgrades.deposit;
 
-import io.github.fabricators_of_create.porting_lib.util.DeferredHolder;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.component.DataComponentType;
@@ -10,6 +9,7 @@ import net.p3pp3rf1y.sophisticatedcore.inventory.ItemStackKey;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.FilterAttributes;
 import net.p3pp3rf1y.sophisticatedcore.upgrades.FilterLogic;
 import net.p3pp3rf1y.sophisticatedcore.util.InventoryHelper;
+import net.p3pp3rf1y.sophisticatedcore.util.RegistrySupplier;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 public class DepositFilterLogic extends FilterLogic {
 	private Set<ItemStackKey> inventoryFilterStacks = new HashSet<>();
 
-	public DepositFilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int filterSlotCount, DeferredHolder<DataComponentType<?>, DataComponentType<FilterAttributes>> contentsComponent) {
+	public DepositFilterLogic(ItemStack upgrade, Consumer<ItemStack> saveHandler, int filterSlotCount, RegistrySupplier<DataComponentType<FilterAttributes>> contentsComponent) {
 		super(upgrade, saveHandler, filterSlotCount, contentsComponent);
 	}
 

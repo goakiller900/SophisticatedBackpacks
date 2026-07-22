@@ -11,7 +11,7 @@ public class BackpackItemClient {
 	@Nullable
 	public static TooltipComponent getTooltipImage(ItemStack stack) {
 		Minecraft mc = Minecraft.getInstance();
-		if (Screen.hasShiftDown() || (mc.player != null && !mc.player.containerMenu.getCarried().isEmpty())) {
+		if (mc.hasShiftDown() || (mc.player != null && !mc.player.containerMenu.getCarried().isEmpty())) {
 			return new BackpackItem.BackpackContentsTooltip(stack);
 		}
 		return null;

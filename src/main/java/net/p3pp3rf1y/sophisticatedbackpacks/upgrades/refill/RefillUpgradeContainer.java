@@ -42,7 +42,7 @@ public class RefillUpgradeContainer extends UpgradeContainerBase<RefillUpgradeWr
 	public void handlePacket(CompoundTag data) {
 		filterLogicContainer.handlePacket(data);
 		if (data.contains(DATA_SET_TARGET_SLOT)) {
-			CompoundTag tag = data.getCompound(DATA_SET_TARGET_SLOT);
+			CompoundTag tag = data.getCompound(DATA_SET_TARGET_SLOT).orElseGet(CompoundTag::new);
 			Optional<Integer> slot = NBTHelper.getInt(tag, "slot");
 			Optional<RefillUpgradeWrapper.TargetSlot> targetSlot = NBTHelper.getEnumConstant(tag, "targetSlot", RefillUpgradeWrapper.TargetSlot::fromName);
 			if (slot.isPresent() && targetSlot.isPresent()) {

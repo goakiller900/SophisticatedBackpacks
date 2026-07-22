@@ -12,7 +12,11 @@ public class RestockUpgradeItem extends UpgradeItemBase<RestockUpgradeWrapper> {
 	private final IntSupplier filterSlotCount;
 
 	public RestockUpgradeItem(IntSupplier filterSlotCount) {
-		super(Config.SERVER.maxUpgradesPerStorage);
+		this(filterSlotCount, new Properties());
+	}
+
+	public RestockUpgradeItem(IntSupplier filterSlotCount, Properties properties) {
+		super(Config.SERVER.maxUpgradesPerStorage, properties);
 		this.filterSlotCount = filterSlotCount;
 	}
 

@@ -16,7 +16,7 @@ public class InceptionUpgradeContainer extends UpgradeContainerBase<InceptionUpg
 	@Override
 	public void handlePacket(CompoundTag data) {
 		if (data.contains(DATA_INVENTORY_ORDER)) {
-			setInventoryOrder(InventoryOrder.fromName(data.getString(DATA_INVENTORY_ORDER)));
+			setInventoryOrder(InventoryOrder.fromName(data.getStringOr(DATA_INVENTORY_ORDER, "")));
 		}
 	}
 

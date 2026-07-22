@@ -20,7 +20,11 @@ public class InceptionUpgradeItem extends UpgradeItemBase<InceptionUpgradeWrappe
 	public static final List<UpgradeConflictDefinition> UPGRADE_CONFLICT_DEFINITIONS = List.of(new UpgradeConflictDefinition(InceptionUpgradeItem.class::isInstance, 0, SBPTranslationHelper.INSTANCE.translError("add.inception_exists")));
 
 	public InceptionUpgradeItem() {
-		super(Config.SERVER.maxUpgradesPerStorage);
+		this(new Properties());
+	}
+
+	public InceptionUpgradeItem(Properties properties) {
+		super(Config.SERVER.maxUpgradesPerStorage, properties);
 	}
 
 	@Override

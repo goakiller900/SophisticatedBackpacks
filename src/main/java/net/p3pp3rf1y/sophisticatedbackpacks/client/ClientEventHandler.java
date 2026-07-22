@@ -1,23 +1,18 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.client;
 
-import io.github.fabricators_of_create.porting_lib.models.geometry.IGeometryLoader;
-import io.github.fabricators_of_create.porting_lib.models.geometry.RegisterGeometryLoadersCallback;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
-import net.fabricmc.fabric.api.event.client.player.ClientPickBlockApplyCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.ItemEntityRenderer;
+import net.minecraft.client.renderer.special.SpecialModelRenderers;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -37,10 +32,6 @@ import net.p3pp3rf1y.sophisticatedbackpacks.network.RequestPlayerSettingsPayload
 import net.p3pp3rf1y.sophisticatedcore.event.client.ClientLifecycleEvents;
 import net.p3pp3rf1y.sophisticatedcore.network.PacketDistributor;
 
-import java.util.Map;
-import java.util.function.Supplier;
-
-import static net.p3pp3rf1y.sophisticatedbackpacks.init.ModBlocks.*;
 import static net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems.EVERLASTING_BACKPACK_ITEM_ENTITY;
 
 public class ClientEventHandler {
@@ -48,10 +39,10 @@ public class ClientEventHandler {
 	}
 
 	private static final String BACKPACK_REG_NAME = "backpack";
-	public static final ModelLayerLocation BACKPACK_LAYER = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, BACKPACK_REG_NAME), "main");
+	public static final ModelLayerLocation BACKPACK_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, BACKPACK_REG_NAME), "main");
 
 	public static void registerHandlers() {
-		RegisterGeometryLoadersCallback.EVENT.register(ClientEventHandler::onModelRegistry);
+		SpecialModelRenderers.ID_MAPPER.put(Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, BACKPACK_REG_NAME), BackpackDynamicModel.Unbaked.MAP_CODEC);
 		registerLayer();
 		registerEntityRenderers();
 		registerReloadListener();
@@ -60,7 +51,6 @@ public class ClientEventHandler {
 		registerBackpackClientExtension();
 
 		ClientLifecycleEvents.CLIENT_LEVEL_LOAD.register(ClientBackpackContentsTooltip::onWorldLoad);
-		ClientPickBlockApplyCallback.EVENT.register(ClientEventHandler::handleBlockPick);
 		ClientPlayConnectionEvents.JOIN.register(ClientEventHandler::onPlayerLoggingIn);
 		ClientLifecycleEvents.CLIENT_LEVEL_LOAD.register(BackpackStorage::onClientWorldLoad);
 	}
@@ -69,28 +59,22 @@ public class ClientEventHandler {
 		PacketDistributor.sendToServer(new RequestPlayerSettingsPayload());
 	}
 
-	private static void onModelRegistry(Map<ResourceLocation, IGeometryLoader<?>> loaders) {
-		loaders.put(ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, BACKPACK_REG_NAME), BackpackDynamicModel.Loader.INSTANCE);
-	}
-
 	public static void registerReloadListener() {
 		registerBackpackLayer(); //event.registerReloadListener((ResourceManagerReloadListener) resourceManager -> registerBackpackLayer());
 	}
 
 	private static void registerEntityRenderers() {
 		EntityRendererRegistry.register(EVERLASTING_BACKPACK_ITEM_ENTITY.get(), ItemEntityRenderer::new);
-		BlockEntityRenderers.register(ModBlocks.BACKPACK_TILE_TYPE.get(), context -> new BackpackBlockEntityRenderer());
-		BlockRenderLayerMap.INSTANCE.putBlocks(RenderType.cutout(), BACKPACKS.stream().map(Supplier::get).toArray(BackpackBlock[]::new));
+		BlockEntityRenderers.register(ModBlocks.BACKPACK_TILE_TYPE.get(), BackpackBlockEntityRenderer::new);
 	}
 
 	public static void registerLayer() {
-		EntityModelLayerRegistry.registerModelLayer(BACKPACK_LAYER, BackpackModel::createBodyLayer);
+		ModelLayerRegistry.registerModelLayer(BACKPACK_LAYER, BackpackModel::createBodyLayer);
 	}
 
 	private static void registerBackpackLayer() {
-		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, livingEntityRenderer, registrationHelper, context) -> {
-			registrationHelper.register(new BackpackLayerRenderer<>(livingEntityRenderer));
-		});
+		LivingEntityRenderLayerRegistrationCallback.EVENT.register((entityType, renderer, registrationHelper, context) ->
+				registrationHelper.register(new BackpackLayerRenderer<>((net.minecraft.client.renderer.entity.RenderLayerParent) renderer)));
 	}
 
 	public static ItemStack handleBlockPick(Player player, HitResult target, ItemStack stack) {
@@ -105,7 +89,7 @@ public class ClientEventHandler {
 			return stack;
 		}
 
-		ItemStack result = state.getBlock().getCloneItemStack(level, pos, state);
+		ItemStack result = state.getCloneItemStack(level, pos, false);
 
 		if (result.isEmpty() || player.getInventory().findSlotMatchingItem(result) > -1) {
 			return stack;
@@ -116,6 +100,8 @@ public class ClientEventHandler {
 	}
 
 	private static void registerBackpackClientExtension() {
-		ModItems.BACKPACKS.forEach(backpack -> BuiltinItemRendererRegistry.INSTANCE.register(backpack.get(), new BackpackItemStackRenderer()));
+		// Backpack item definitions select the registered special model.  Unlike the
+		// removed built-in renderer hook this also participates in the 26.2 render
+		// state extraction pipeline.
 	}
 }

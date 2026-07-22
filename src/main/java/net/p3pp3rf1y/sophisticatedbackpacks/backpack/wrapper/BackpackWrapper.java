@@ -1,6 +1,6 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper;
 
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
@@ -428,7 +428,7 @@ public class BackpackWrapper implements IBackpackWrapper {
 	}
 
 	@Override
-	public void setLoot(ResourceLocation lootTableName, float lootFactor) {
+	public void setLoot(Identifier lootTableName, float lootFactor) {
 		getBackpackStack().sophisticatedCore_set(ModDataComponents.LOOT_TABLE, lootTableName);
 		getBackpackStack().sophisticatedCore_set(ModDataComponents.LOOT_FACTOR, lootFactor);
 		backpackSaveHandler.run();
@@ -437,7 +437,7 @@ public class BackpackWrapper implements IBackpackWrapper {
 	@Override
 	public void fillWithLoot(Player player) {
 		Level level = player.level();
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			return;
 		}
 		BlockPos pos = player.blockPosition();
@@ -463,7 +463,7 @@ public class BackpackWrapper implements IBackpackWrapper {
 	}
 
 	private void fillWithLoot(Level level, BlockPos pos) {
-		ResourceLocation lootTable = getBackpackStack().sophisticatedCore_get(ModDataComponents.LOOT_TABLE);
+		Identifier lootTable = getBackpackStack().sophisticatedCore_get(ModDataComponents.LOOT_TABLE);
 		if (lootTable == null) {
 			return;
 		}
@@ -528,7 +528,7 @@ public class BackpackWrapper implements IBackpackWrapper {
 		return getBackpackStack().sophisticatedCore_getOrDefault(ModDataComponents.COLUMNS_TAKEN, 0);
 	}
 
-	private void fillWithLootFromTable(Level level, BlockPos pos, ResourceLocation lootTable) {
+	private void fillWithLootFromTable(Level level, BlockPos pos, Identifier lootTable) {
 		MinecraftServer server = level.getServer();
 		if (server == null || !(level instanceof ServerLevel serverLevel)) {
 			return;
@@ -542,7 +542,7 @@ public class BackpackWrapper implements IBackpackWrapper {
 		List<ItemStack> loot = LootHelper.getLoot(lootTable, server, serverLevel, pos);
 		loot.removeIf(stack -> stack.getItem() instanceof BackpackItem);
 		loot = RandHelper.getNRandomElements(loot, (int) (loot.size() * lootFactor));
-		LootHelper.fillWithLoot(serverLevel.random, loot, getInventoryHandler());
+		LootHelper.fillWithLoot(serverLevel.getRandom(), loot, getInventoryHandler());
 	}
 
 	private void setNumberOfUpgradeSlots(int numberOfUpgradeSlots) {

@@ -4,10 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SwordItem;
 import net.fabricmc.loader.api.FabricLoader;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
 import net.p3pp3rf1y.sophisticatedbackpacks.registry.IRegistryDataLoader;
@@ -32,12 +32,12 @@ public class SwordRegistry {
 			return true;
 		}
 
-		if (stack.getItem() instanceof SwordItem) {
+		if (stack.has(DataComponents.WEAPON)) {
 			SWORD_ITEMS.add(stack.getItem());
 			return true;
 		}
 
-		ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(stack.getItem());
+		Identifier registryName = BuiltInRegistries.ITEM.getKey(stack.getItem());
 		if (registryName == BuiltInRegistries.ITEM.getDefaultKey()) {
 			return false;
 		}
@@ -94,7 +94,7 @@ public class SwordRegistry {
 		}
 
 		private void parseSword(String swordName) {
-			BuiltInRegistries.ITEM.getOptional(ResourceLocation.parse(swordName))
+			BuiltInRegistries.ITEM.getOptional(Identifier.parse(swordName))
 					.ifPresentOrElse(
 							SWORD_ITEMS::add,
 							() -> {

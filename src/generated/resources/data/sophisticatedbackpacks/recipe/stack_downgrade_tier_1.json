@@ -6,17 +6,10 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "F": {
-      "item": "minecraft:flint"
-    },
-    "S": {
-      "item": "minecraft:stick"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "F": "minecraft:flint",
+    "S": "minecraft:stick"
   },
   "pattern": [
     "SFS",
@@ -24,7 +17,6 @@
     "FSF"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:stack_downgrade_tier_1"
   }
 }

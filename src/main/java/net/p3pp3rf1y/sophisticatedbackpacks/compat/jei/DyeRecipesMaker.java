@@ -3,10 +3,13 @@ package net.p3pp3rf1y.sophisticatedbackpacks.compat.jei;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.*;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
@@ -30,13 +33,13 @@ public class DyeRecipesMaker {
 	}
 
 	private static void addMultipleColorsRecipe(List<RecipeHolder<CraftingRecipe>> recipes) {
-		NonNullList<Ingredient> ingredients = NonNullList.create();
-		ingredients.add(Ingredient.of(ConventionalItemTags.YELLOW_DYES));
-		ingredients.add(Ingredient.of(ModItems.BACKPACK.get()));
-		ingredients.add(Ingredient.EMPTY);
-		ingredients.add(Ingredient.of(ConventionalItemTags.LIME_DYES));
-		ingredients.add(Ingredient.of(ConventionalItemTags.BLUE_DYES));
-		ingredients.add(Ingredient.of(ConventionalItemTags.BLACK_DYES));
+		List<Optional<Ingredient>> ingredients = new ArrayList<>();
+		ingredients.add(Optional.of(ingredient(ConventionalItemTags.YELLOW_DYES)));
+		ingredients.add(Optional.of(Ingredient.of(ModItems.BACKPACK.get())));
+		ingredients.add(Optional.empty());
+		ingredients.add(Optional.of(ingredient(ConventionalItemTags.LIME_DYES)));
+		ingredients.add(Optional.of(ingredient(ConventionalItemTags.BLUE_DYES)));
+		ingredients.add(Optional.of(ingredient(ConventionalItemTags.BLACK_DYES)));
 
 		ItemStack backpackOutput = new ItemStack(ModItems.BACKPACK.get());
 		int clothColor = ColorHelper.calculateColor(BackpackWrapper.DEFAULT_MAIN_COLOR, BackpackWrapper.DEFAULT_MAIN_COLOR, List.of(
@@ -48,22 +51,28 @@ public class DyeRecipesMaker {
 
 		BackpackWrapper.fromStack(backpackOutput).setColors(clothColor, trimColor);
 
-		ShapedRecipePattern pattern = new ShapedRecipePattern(3, 1, ingredients, Optional.empty());
-		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "multiple_colors");
-		recipes.add(new RecipeHolder<>(id, new ShapedRecipe("", CraftingBookCategory.MISC, pattern, backpackOutput)));
+		ShapedRecipePattern pattern = new ShapedRecipePattern(3, 2, ingredients, Optional.empty());
+		Identifier id = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "multiple_colors");
+		recipes.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, id), new ShapedRecipe(new Recipe.CommonInfo(false),
+				new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""), pattern, ItemStackTemplate.fromNonEmptyStack(backpackOutput))));
 	}
 
 	private static void addSingleColorRecipes(List<RecipeHolder<CraftingRecipe>> recipes) {
 		for (DyeColor color : DyeColor.values()) {
 			ItemStack backpackOutput = new ItemStack(ModItems.BACKPACK.get());
 			BackpackWrapper.fromStack(backpackOutput).setColors(color.getTextureDiffuseColor(), color.getTextureDiffuseColor());
-			NonNullList<Ingredient> ingredients = NonNullList.create();
-			ingredients.add(Ingredient.of(ModItems.BACKPACK.get()));
-			ingredients.add(Ingredient.of(TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "dyes/" + color.getName()))));
+			List<Optional<Ingredient>> ingredients = new ArrayList<>();
+			ingredients.add(Optional.of(Ingredient.of(ModItems.BACKPACK.get())));
+			ingredients.add(Optional.of(ingredient(TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("c", "dyes/" + color.getName())))));
 
 			ShapedRecipePattern pattern = new ShapedRecipePattern(1, 2, ingredients, Optional.empty());
-			ResourceLocation id = ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "single_color_" + color.getSerializedName());
-			recipes.add(new RecipeHolder<>(id, new ShapedRecipe("", CraftingBookCategory.MISC, pattern, backpackOutput)));
+			Identifier id = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "single_color_" + color.getSerializedName());
+			recipes.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, id), new ShapedRecipe(new Recipe.CommonInfo(false),
+					new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""), pattern, ItemStackTemplate.fromNonEmptyStack(backpackOutput))));
 		}
+	}
+
+	private static Ingredient ingredient(TagKey<net.minecraft.world.item.Item> tag) {
+		return Ingredient.of(BuiltInRegistries.ITEM.get(tag).orElseThrow());
 	}
 }

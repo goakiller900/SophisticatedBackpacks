@@ -1,7 +1,7 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems;
 import net.p3pp3rf1y.sophisticatedcore.api.IStorageFluidHandler;
@@ -27,7 +27,7 @@ public interface IBackpackWrapper extends IStorageWrapper {
 
 	void setSlotNumbers(int numberOfInventorySlots, int numberOfUpgradeSlots);
 
-	void setLoot(ResourceLocation lootTableName, float lootPercentage);
+	void setLoot(Identifier lootTableName, float lootPercentage);
 
 	void setContentsUuid(UUID storageUuid);
 
@@ -98,7 +98,7 @@ public interface IBackpackWrapper extends IStorageWrapper {
 		}
 
 		@Override
-		public void setLoot(ResourceLocation lootTableName, float lootPercentage) {
+		public void setLoot(Identifier lootTableName, float lootPercentage) {
 			//noop
 		}
 

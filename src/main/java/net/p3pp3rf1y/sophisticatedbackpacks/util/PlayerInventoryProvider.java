@@ -30,12 +30,12 @@ public class PlayerInventoryProvider {
 	}
 
 	private PlayerInventoryProvider() {
-		addPlayerInventoryHandler(MAIN_INVENTORY, (player, gameTime) -> PlayerInventoryHandler.SINGLE_IDENTIFIER, (player, identifier) -> player.getInventory().items.size(),
-				(player, identifier, slot) -> player.getInventory().items.get(slot), true, false, false, false);
-		addPlayerInventoryHandler(OFFHAND_INVENTORY, (player, gameTime) -> PlayerInventoryHandler.SINGLE_IDENTIFIER, (player, identifier) -> player.getInventory().offhand.size(),
-				(player, identifier, slot) -> player.getInventory().offhand.get(slot), false, false, false, false);
+		addPlayerInventoryHandler(MAIN_INVENTORY, (player, gameTime) -> PlayerInventoryHandler.SINGLE_IDENTIFIER, (player, identifier) -> player.getInventory().getNonEquipmentItems().size(),
+				(player, identifier, slot) -> player.getInventory().getNonEquipmentItems().get(slot), true, false, false, false);
+		addPlayerInventoryHandler(OFFHAND_INVENTORY, (player, gameTime) -> PlayerInventoryHandler.SINGLE_IDENTIFIER, (player, identifier) -> 1,
+				(player, identifier, slot) -> player.getItemBySlot(EquipmentSlot.OFFHAND), false, false, false, false);
 		addPlayerInventoryHandler(ARMOR_INVENTORY, (player, gameTime) -> PlayerInventoryHandler.SINGLE_IDENTIFIER, (player, identifier) -> 1,
-				(player, identifier, slot) -> player.getInventory().armor.get(EquipmentSlot.CHEST.getIndex()), false, true, false, true);
+				(player, identifier, slot) -> player.getItemBySlot(EquipmentSlot.CHEST), false, true, false, true);
 	}
 
 	public void addPlayerInventoryHandler(String name, BiFunction<Player,Long, Set<String>> identifiersGetter, PlayerInventoryHandler.SlotCountGetter slotCountGetter, PlayerInventoryHandler.SlotStackGetter slotStackGetter, boolean visibleInGui, boolean rendered, boolean ownRenderer, boolean accessibleByAnotherPlayer) {

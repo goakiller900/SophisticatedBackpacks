@@ -34,8 +34,8 @@ public class ListCommand {
 			MutableComponent message = Component.literal("");
 			message.append(Component.literal(alr.getBackpackName())
 					.withStyle(s ->
-							s.withColor(ChatFormatting.GREEN).withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/sophisticatedbackpacks give @p " + alr.getBackpackUuid()))
-									.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("chat.sophisticatedbackpacks.backpack_uuid.tooltip", alr.getBackpackUuid().toString())))
+							s.withColor(ChatFormatting.GREEN).withClickEvent(new ClickEvent.SuggestCommand("/sophisticatedbackpacks give @p " + alr.getBackpackUuid()))
+									.withHoverEvent(new HoverEvent.ShowText(Component.translatable("chat.sophisticatedbackpacks.backpack_uuid.tooltip", alr.getBackpackUuid().toString())))
 					)
 			);
 			message.append(Component.literal(", "));

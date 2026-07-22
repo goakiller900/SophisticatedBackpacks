@@ -1,7 +1,8 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.client.gui;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,15 +24,15 @@ public class BackpackScreen extends StorageScreenBase<BackpackContainer> {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
 		/*if (getFocused() != null) {
 			return super.keyPressed(keyCode, scanCode, modifiers);
 		}*/
-		if (keyCode == 256 || KeybindHandler.BACKPACK_OPEN_KEYBIND.matches(keyCode, scanCode)) {
-			if (getMenu().isFirstLevelStorage() && (keyCode == 256 || mouseNotOverBackpack())) {
+		if (event.key() == 256 || KeybindHandler.BACKPACK_OPEN_KEYBIND.matches(event)) {
+			if (getMenu().isFirstLevelStorage() && (event.key() == 256 || mouseNotOverBackpack())) {
 				if (getMenu().getBackpackContext().wasOpenFromInventory()) {
 					this.minecraft.player.closeContainer();
-					this.minecraft.setScreen(new InventoryScreen(this.minecraft.player));
+					this.minecraft.setScreenAndShow(new InventoryScreen(this.minecraft.player));
 				} else {
 					onClose();
 				}
@@ -41,7 +42,7 @@ public class BackpackScreen extends StorageScreenBase<BackpackContainer> {
 				return true;
 			}
 		}
-		return super.keyPressed(keyCode, scanCode, modifiers);
+		return super.keyPressed(event);
 	}
 
 	private boolean mouseNotOverBackpack() {
@@ -55,8 +56,8 @@ public class BackpackScreen extends StorageScreenBase<BackpackContainer> {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 		if (getMenu().getNumberOfStorageInventorySlots() == 0 && Minecraft.getInstance().player != null) {
 			Minecraft.getInstance().player.closeContainer();
 		}

@@ -1,6 +1,8 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.backpack;
 
-import io.github.fabricators_of_create.porting_lib.transfer.item.SlottedStackStorage;
+import com.mojang.serialization.Codec;
+
+import net.p3pp3rf1y.sophisticatedcore.inventory.SlottedStackStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -8,6 +10,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.p3pp3rf1y.sophisticatedbackpacks.Config;
@@ -64,17 +68,19 @@ public class BackpackBlockEntity extends BlockEntity implements IControllableSto
 	}
 
 	@Override
-	public void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-		super.loadAdditional(tag, registries);
-		setBackpackFromNbt(tag);
+	protected void loadAdditional(ValueInput input) {
+		super.loadAdditional(input);
+		input.read("backpackData", ItemStack.OPTIONAL_CODEC).ifPresent(this::setBackpack);
 
-		// If updateBlockRender exists we are in an update packet load
-		if (tag.contains("updateBlockRender")) {
-			if (tag.getBoolean("updateBlockRender")) {
+		// If updateBlockRender exists we are in an update packet load.
+		Optional<Boolean> shouldUpdateBlockRender = input.read("updateBlockRender", Codec.BOOL);
+		if (shouldUpdateBlockRender.isPresent()) {
+			if (shouldUpdateBlockRender.get()) {
 				WorldHelper.notifyBlockUpdate(this);
 			}
 		} else {
-			loadControllerPos(tag);
+			long controller = input.getLongOr("controllerPos", Long.MIN_VALUE);
+			controllerPos = controller == Long.MIN_VALUE ? null : BlockPos.of(controller);
 
 			if (level != null && !level.isClientSide()) {
 				removeControllerPos();
@@ -91,26 +97,19 @@ public class BackpackBlockEntity extends BlockEntity implements IControllableSto
 		registerWithControllerOnLoad();
 	}
 
-	private void setBackpackFromNbt(CompoundTag nbt) {
-		RegistryHelper.getRegistryAccess().ifPresent(registryAccess -> setBackpack(ItemStack.parseOptional(registryAccess, nbt.getCompound("backpackData"))));
-	}
-
 	@Override
-	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-		super.saveAdditional(tag, registries);
-		writeBackpack(tag, registries);
-		saveControllerPos(tag);
-	}
-
-	private void writeBackpack(CompoundTag ret, HolderLookup.Provider registries) {
-		ItemStack backpackCopy = backpackWrapper.getBackpack().copy();
-		ret.put("backpackData", backpackCopy.save(registries));
+	protected void saveAdditional(ValueOutput output) {
+		super.saveAdditional(output);
+		output.store("backpackData", ItemStack.OPTIONAL_CODEC, backpackWrapper.getBackpack().copy());
+		if (controllerPos != null) {
+			output.putLong("controllerPos", controllerPos.asLong());
+		}
 	}
 
 	@Override
 	public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
 		CompoundTag ret = super.getUpdateTag(registries);
-		writeBackpack(ret, registries);
+		ret.store("backpackData", ItemStack.OPTIONAL_CODEC, backpackWrapper.getBackpack().copy());
 		ret.putBoolean("updateBlockRender", updateBlockRender);
 		updateBlockRender = true;
 		return ret;
@@ -204,7 +203,7 @@ public class BackpackBlockEntity extends BlockEntity implements IControllableSto
 	}
 
 	public static void serverTick(Level level, BlockPos blockPos, BackpackBlockEntity backpackBlockEntity) {
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			return;
 		}
 		backpackBlockEntity.backpackWrapper.getUpgradeHandler().getWrappersThatImplement(ITickableUpgrade.class).forEach(upgrade -> upgrade.tick(null, level, blockPos));
@@ -256,7 +255,7 @@ public class BackpackBlockEntity extends BlockEntity implements IControllableSto
 	@Override
 	public void registerController(ControllerBlockEntityBase controllerBlockEntity) {
 		IControllableStorage.super.registerController(controllerBlockEntity);
-		if (level != null && !level.isClientSide) {
+		if (level != null && !level.isClientSide()) {
 			backpackWrapper.registerOnSlotsChangeListener(this::changeSlots);
 			backpackWrapper.registerOnInventoryHandlerRefreshListener(this::registerInventoryStackListeners);
 		}

@@ -14,7 +14,11 @@ public class ToolSwapperUpgradeItem extends UpgradeItemBase<ToolSwapperUpgradeWr
 	private final boolean swapToolOnKeyPress;
 
 	public ToolSwapperUpgradeItem(boolean hasSettingsTab, boolean swapToolOnKeyPress) {
-		super(Config.SERVER.maxUpgradesPerStorage);
+		this(hasSettingsTab, swapToolOnKeyPress, new Properties());
+	}
+
+	public ToolSwapperUpgradeItem(boolean hasSettingsTab, boolean swapToolOnKeyPress, Properties properties) {
+		super(Config.SERVER.maxUpgradesPerStorage, properties);
 		this.hasSettingsTab = hasSettingsTab;
 		this.swapToolOnKeyPress = swapToolOnKeyPress;
 	}

@@ -28,4 +28,12 @@ public class SBPButtonDefinitions {
 					false, getButtonStateData(new UV(48, 48), Dimension.SQUARE_16, new Position(1, 1),
 							SBPTranslationHelper.INSTANCE.getTranslatedLines(SBPTranslationHelper.INSTANCE.translUpgradeButton("shift_click_into_inventory")))
 			));
+
+	public static final ButtonDefinition.Toggle<Boolean> REFILL_INPUT = ButtonDefinitions.createToggleButtonDefinition(
+			Map.of(
+					true, getButtonStateData(new UV(64, 48), Dimension.SQUARE_16, new Position(1, 1),
+							SBPTranslationHelper.INSTANCE.getTranslatedLines(SBPTranslationHelper.INSTANCE.translUpgradeButton("refill_input"), null)),
+					false, getButtonStateData(new UV(80, 48), Dimension.SQUARE_16, new Position(1, 1),
+							SBPTranslationHelper.INSTANCE.getTranslatedLines(SBPTranslationHelper.INSTANCE.translUpgradeButton("do_not_refill_input"), null))
+			));
 }

@@ -165,7 +165,7 @@ public abstract class BackpackContext {
 
 		@Override
 		public void onUpgradeChanged(Player player) {
-			if (!player.level().isClientSide && handlerName.equals(PlayerInventoryProvider.MAIN_INVENTORY)) {
+			if (!player.level().isClientSide() && handlerName.equals(PlayerInventoryProvider.MAIN_INVENTORY)) {
 				IStorageWrapper backpackWrapper = getBackpackWrapper(player);
 				//copying render info nbt because in single player the packet just gets handed over to client instead of actually buffer being used and making a copy of the nbt
 				// which resulted in issues where client would happily modify nbt instance which is used on server as well and follow up updates on client would also mess up
@@ -290,7 +290,7 @@ public abstract class BackpackContext {
 
 		@Override
 		public void onUpgradeChanged(Player player) {
-			if (!player.level().isClientSide) {
+			if (!player.level().isClientSide()) {
 				WorldHelper.getBlockEntity(player.level(), pos, BackpackBlockEntity.class).ifPresent(BackpackBlockEntity::refreshRenderState);
 			}
 		}

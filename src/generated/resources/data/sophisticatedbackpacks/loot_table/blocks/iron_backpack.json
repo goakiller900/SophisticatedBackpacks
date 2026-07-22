@@ -2,19 +2,12 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "bonus_rolls": 0.0,
       "entries": [
         {
           "type": "minecraft:item",
           "name": "sophisticatedbackpacks:iron_backpack"
         }
       ],
-      "functions": [
-        {
-          "function": "sophisticatedbackpacks:copy_backpack_data"
-        }
-      ],
-      "name": "main",
       "rolls": 1.0
     }
   ],

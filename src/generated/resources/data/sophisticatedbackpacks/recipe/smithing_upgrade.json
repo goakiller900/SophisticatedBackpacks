@@ -6,20 +6,11 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "C": {
-      "tag": "c:chests/wooden"
-    },
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "S": {
-      "item": "minecraft:smithing_table"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "C": "#c:chests/wooden",
+    "I": "#c:ingots/iron",
+    "S": "minecraft:smithing_table"
   },
   "pattern": [
     " S ",
@@ -27,7 +18,6 @@
     " C "
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:smithing_upgrade"
   }
 }

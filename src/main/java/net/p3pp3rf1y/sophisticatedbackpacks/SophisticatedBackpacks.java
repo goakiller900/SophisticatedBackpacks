@@ -1,12 +1,13 @@
 package net.p3pp3rf1y.sophisticatedbackpacks;
 
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.neoforged.fml.config.ModConfig;
 import net.p3pp3rf1y.sophisticatedbackpacks.command.SBPCommand;
+import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackLootEvents;
 import net.p3pp3rf1y.sophisticatedbackpacks.common.CommonEventHandler;
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems;
 import net.p3pp3rf1y.sophisticatedbackpacks.registry.RegistryLoader;
@@ -23,10 +24,11 @@ public class SophisticatedBackpacks implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		NeoForgeConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.SERVER, Config.SERVER_SPEC);
-		NeoForgeConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.COMMON, Config.COMMON_SPEC);
+		ConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.SERVER, Config.SERVER_SPEC);
+		ConfigRegistry.INSTANCE.register(MOD_ID, ModConfig.Type.COMMON, Config.COMMON_SPEC);
 		commonEventHandler.registerHandlers();
 		setup();
+		BackpackLootEvents.register();
 		Config.SERVER.initListeners();
 		SBPCommand.init();
 		ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(registryLoader);
@@ -39,8 +41,8 @@ public class SophisticatedBackpacks implements ModInitializer {
 		ModItems.registerCauldronInteractions();
 	}
 
-	public static ResourceLocation getRL(String regName) {
-		return ResourceLocation.fromNamespaceAndPath(MOD_ID, regName);
+	public static Identifier getRL(String regName) {
+		return Identifier.fromNamespaceAndPath(MOD_ID, regName);
 	}
 
 	public static String getRegistryName(String regName) {

@@ -6,23 +6,12 @@
     }
   ],
   "type": "sophisticatedcore:upgrade_next_tier",
-  "category": "misc",
   "key": {
-    "E": {
-      "tag": "c:ender_pearls"
-    },
-    "I": {
-      "tag": "c:ingots/iron"
-    },
-    "L": {
-      "tag": "c:gems/lapis"
-    },
-    "P": {
-      "item": "sophisticatedbackpacks:pickup_upgrade"
-    },
-    "R": {
-      "tag": "c:dusts/redstone"
-    }
+    "E": "#c:ender_pearls",
+    "I": "#c:ingots/iron",
+    "L": "#c:gems/lapis",
+    "P": "sophisticatedbackpacks:pickup_upgrade",
+    "R": "#c:dusts/redstone"
   },
   "pattern": [
     "EIE",
@@ -30,7 +19,6 @@
     "R L"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:magnet_upgrade"
   }
 }

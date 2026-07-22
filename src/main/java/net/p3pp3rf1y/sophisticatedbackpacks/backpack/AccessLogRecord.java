@@ -1,12 +1,13 @@
 package net.p3pp3rf1y.sophisticatedbackpacks.backpack;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.Identifier;
 
 import java.util.UUID;
 
 public class AccessLogRecord {
-	private final ResourceLocation backpackItemRegistryName;
+	private final Identifier backpackItemRegistryName;
 	private final UUID backpackUuid;
 	private final String playerName;
 	private final String backpackName;
@@ -15,7 +16,7 @@ public class AccessLogRecord {
 	private final long accessTime;
 	private final int columnsTaken;
 
-	public AccessLogRecord(ResourceLocation backpackItemRegistryName, UUID backpackUuid, String playerName, String backpackName, int clothColor, int trimColor, long accessTime, int columnsTaken) {
+	public AccessLogRecord(Identifier backpackItemRegistryName, UUID backpackUuid, String playerName, String backpackName, int clothColor, int trimColor, long accessTime, int columnsTaken) {
 		this.backpackItemRegistryName = backpackItemRegistryName;
 		this.backpackUuid = backpackUuid;
 		this.playerName = playerName;
@@ -54,14 +55,14 @@ public class AccessLogRecord {
 		return columnsTaken;
 	}
 
-	public ResourceLocation getBackpackItemRegistryName() {
+	public Identifier getBackpackItemRegistryName() {
 		return backpackItemRegistryName;
 	}
 
 	public CompoundTag serializeToNBT() {
 		CompoundTag ret = new CompoundTag();
 		ret.putString("backpackItemRegistryName", backpackItemRegistryName.toString());
-		ret.putUUID("backpackUuid", backpackUuid);
+		ret.store("backpackUuid", UUIDUtil.CODEC, backpackUuid);
 		ret.putString("playerName", playerName);
 		ret.putString("backpackName", backpackName);
 		ret.putInt("clothColor", clothColor);
@@ -73,14 +74,14 @@ public class AccessLogRecord {
 
 	public static AccessLogRecord deserializeFromNBT(CompoundTag nbt) {
 		return new AccessLogRecord(
-				ResourceLocation.parse(nbt.getString("backpackItemRegistryName")),
-				nbt.getUUID("backpackUuid"),
-				nbt.getString("playerName"),
-				nbt.getString("backpackName"),
-				nbt.getInt("clothColor"),
-				nbt.getInt("trimColor"),
-				nbt.getLong("accessTime"),
-				nbt.getInt("columnsTaken")
+				Identifier.parse(nbt.getStringOr("backpackItemRegistryName", "minecraft:air")),
+				nbt.read("backpackUuid", UUIDUtil.CODEC).orElse(new UUID(0, 0)),
+				nbt.getStringOr("playerName", ""),
+				nbt.getStringOr("backpackName", ""),
+				nbt.getIntOr("clothColor", 0),
+				nbt.getIntOr("trimColor", 0),
+				nbt.getLongOr("accessTime", 0),
+				nbt.getIntOr("columnsTaken", 0)
 		);
 	}
 }

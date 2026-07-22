@@ -9,7 +9,7 @@ import mezz.jei.api.helpers.IStackHelper;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 import mezz.jei.api.registration.*;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -42,8 +42,8 @@ public class SBPPlugin implements IModPlugin {
 	}
 
 	@Override
-	public ResourceLocation getPluginUid() {
-		return ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "default");
+	public Identifier getPluginUid() {
+		return Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "default");
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class SBPPlugin implements IModPlugin {
 	@Override
 	public void registerRecipes(IRecipeRegistration registration) {
 		registration.addRecipes(RecipeTypes.CRAFTING, DyeRecipesMaker.getRecipes());
-		registration.addRecipes(RecipeTypes.CRAFTING, ClientRecipeHelper.transformAllRecipesOfType(RecipeType.CRAFTING, BackpackUpgradeRecipe.class, ClientRecipeHelper::copyShapedRecipe));
+		registration.addRecipes(RecipeTypes.CRAFTING, ClientRecipeHelper.transformAllRecipesOfType(RecipeType.CRAFTING, BackpackUpgradeRecipe.class, recipe -> ClientRecipeHelper.copyShapedRecipe(recipe.getCompose())));
 	}
 
 	@Override
@@ -102,6 +102,8 @@ public class SBPPlugin implements IModPlugin {
 	public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
 		IRecipeTransferHandlerHelper handlerHelper = registration.getTransferHelper();
 		IStackHelper stackHelper = registration.getJeiHelpers().getStackHelper();
+		mezz.jei.api.recipe.RecipeType<RecipeHolder<CraftingRecipe>> craftingType = mezz.jei.api.recipe.RecipeType.createFromVanilla(RecipeType.CRAFTING);
+		mezz.jei.api.recipe.RecipeType<RecipeHolder<SmithingRecipe>> smithingType = mezz.jei.api.recipe.RecipeType.createFromVanilla(RecipeType.SMITHING);
 		registration.addRecipeTransferHandler(new CraftingContainerRecipeTransferHandlerBase<BackpackContainer, RecipeHolder<CraftingRecipe>>(handlerHelper, stackHelper) {
 			@Override
 			public Class<BackpackContainer> getContainerClass() {
@@ -110,9 +112,9 @@ public class SBPPlugin implements IModPlugin {
 
 			@Override
 			public mezz.jei.api.recipe.RecipeType<RecipeHolder<CraftingRecipe>> getRecipeType() {
-				return RecipeTypes.CRAFTING;
+				return craftingType;
 			}
-		}, RecipeTypes.CRAFTING);
+		}, craftingType);
 
 		registration.addRecipeTransferHandler(new CraftingContainerRecipeTransferHandlerBase<BackpackContainer, RecipeHolder<SmithingRecipe>>(handlerHelper, stackHelper) {
 			@Override
@@ -122,8 +124,8 @@ public class SBPPlugin implements IModPlugin {
 
 			@Override
 			public mezz.jei.api.recipe.RecipeType<RecipeHolder<SmithingRecipe>> getRecipeType() {
-				return RecipeTypes.SMITHING;
+				return smithingType;
 			}
-		}, RecipeTypes.SMITHING);
+		}, smithingType);
 	}
 }

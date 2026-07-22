@@ -6,20 +6,11 @@
     }
   ],
   "type": "minecraft:crafting_shaped",
-  "category": "misc",
   "key": {
-    "B": {
-      "item": "sophisticatedbackpacks:upgrade_base"
-    },
-    "D": {
-      "tag": "c:gems/diamond"
-    },
-    "E": {
-      "item": "minecraft:ender_eye"
-    },
-    "S": {
-      "item": "minecraft:nether_star"
-    }
+    "B": "sophisticatedbackpacks:upgrade_base",
+    "D": "#c:gems/diamond",
+    "E": "minecraft:ender_eye",
+    "S": "minecraft:nether_star"
   },
   "pattern": [
     "ESE",
@@ -27,7 +18,6 @@
     "EDE"
   ],
   "result": {
-    "count": 1,
     "id": "sophisticatedbackpacks:inception_upgrade"
   }
 }

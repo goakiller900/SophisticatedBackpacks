@@ -2,23 +2,24 @@ package net.p3pp3rf1y.sophisticatedbackpacks.client.render;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.AgeableListModel;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Unit;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -27,7 +28,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import io.github.fabricators_of_create.porting_lib.fluids.FluidStack;
+import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
 import net.p3pp3rf1y.sophisticatedbackpacks.SophisticatedBackpacks;
 import net.p3pp3rf1y.sophisticatedbackpacks.init.ModItems;
 import net.p3pp3rf1y.sophisticatedcore.renderdata.RenderInfo;
@@ -38,16 +39,16 @@ import net.p3pp3rf1y.sophisticatedcore.upgrades.IRenderedTankUpgrade;
 import javax.annotation.Nonnull;
 import java.util.*;
 
-public class BackpackModel extends AgeableListModel<LivingEntity> implements IBackpackModel {
+public class BackpackModel implements IBackpackModel {
 	private static final Map<EntityType<?>, Vec3> entityTranslations;
 
 	static {
 		entityTranslations = new HashMap<>();
-		entityTranslations.put(EntityType.ENDERMAN, new Vec3(0, -0.8, 0));
+		entityTranslations.put(EntityTypes.ENDERMAN, new Vec3(0, -0.8, 0));
 	}
 
-	private static final ResourceLocation BACKPACK_ENTITY_TEXTURE = ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/backpack.png");
-	private static final ResourceLocation TANK_GLASS_TEXTURE = ResourceLocation.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/tank_glass.png");
+	private static final Identifier BACKPACK_ENTITY_TEXTURE = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/backpack.png");
+	private static final Identifier TANK_GLASS_TEXTURE = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/tank_glass.png");
 	public static final float CHILD_Y_OFFSET = 0.3F;
 	public static final float CHILD_Z_OFFSET = 0.1F;
 	public static final float CHILD_SCALE = 0.55F;
@@ -107,8 +108,10 @@ public class BackpackModel extends AgeableListModel<LivingEntity> implements IBa
 	private final ModelPart rightTankBorder;
 	public final ModelPart leftTankGlass;
 	public final ModelPart rightTankGlass;
+	private final ModelPart root;
 
 	public BackpackModel(ModelPart part) {
+		root = part;
 		cloth = part.getChild(CLOTH_PART);
 		rightPouchesBorder = part.getChild(RIGHT_POUCHES_BORDER_PART);
 		leftPouchesBorder = part.getChild(LEFT_POUCHES_BORDER_PART);
@@ -329,87 +332,81 @@ public class BackpackModel extends AgeableListModel<LivingEntity> implements IBa
 	}
 
 	@Override
-	public <L extends LivingEntity, M extends EntityModel<L>> void render(M parentModel, LivingEntity livingEntity, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int clothColor, int borderColor, Item backpackItem, RenderInfo renderInfo) {
-		VertexConsumer vertexBuilder = buffer.getBuffer(RenderType.entityCutoutNoCull(BACKPACK_ENTITY_TEXTURE));
+	public void submit(PoseStack poseStack, SubmitNodeCollector collector, int packedLight, int clothColor, int borderColor, Item backpackItem, RenderInfo renderInfo) {
 		Set<TankPosition> tankPositions = renderInfo.getTankRenderInfos().keySet();
 		boolean showLeftTank = tankPositions.contains(TankPosition.LEFT);
 		boolean showRightTank = tankPositions.contains(TankPosition.RIGHT);
 		Optional<IRenderedBatteryUpgrade.BatteryRenderInfo> batteryRenderInfo = renderInfo.getBatteryRenderInfo();
 
 		if (showLeftTank) {
-			leftTank.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			leftTankBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+			submit(collector, leftTank, poseStack, packedLight, -1);
+			submit(collector, leftTankBorder, poseStack, packedLight, borderColor);
 		} else {
-			fabricLeft.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			clipsLeftPouches.get(backpackItem).render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			leftPouches.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, clothColor);
-			leftPouchesBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+			submit(collector, fabricLeft, poseStack, packedLight, -1);
+			submit(collector, clipsLeftPouches.get(backpackItem), poseStack, packedLight, -1);
+			submit(collector, leftPouches, poseStack, packedLight, clothColor);
+			submit(collector, leftPouchesBorder, poseStack, packedLight, borderColor);
 		}
 
 		if (showRightTank) {
-			rightTank.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			rightTankBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+			submit(collector, rightTank, poseStack, packedLight, -1);
+			submit(collector, rightTankBorder, poseStack, packedLight, borderColor);
 		} else {
-			fabricRight.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			clipsRightPouches.get(backpackItem).render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			rightPouches.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, clothColor);
-			rightPouchesBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+			submit(collector, fabricRight, poseStack, packedLight, -1);
+			submit(collector, clipsRightPouches.get(backpackItem), poseStack, packedLight, -1);
+			submit(collector, rightPouches, poseStack, packedLight, clothColor);
+			submit(collector, rightPouchesBorder, poseStack, packedLight, borderColor);
 		}
 
 		if (batteryRenderInfo.isPresent()) {
-			battery.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			batteryBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
-			clipsBattery.get(backpackItem).render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
+			submit(collector, battery, poseStack, packedLight, -1);
+			submit(collector, batteryBorder, poseStack, packedLight, borderColor);
+			submit(collector, clipsBattery.get(backpackItem), poseStack, packedLight, -1);
 		} else {
-			fabricFront.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			clipsFrontPouch.get(backpackItem).render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-			frontPouch.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, clothColor);
-			frontPouchBorder.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+			submit(collector, fabricFront, poseStack, packedLight, -1);
+			submit(collector, clipsFrontPouch.get(backpackItem), poseStack, packedLight, -1);
+			submit(collector, frontPouch, poseStack, packedLight, clothColor);
+			submit(collector, frontPouchBorder, poseStack, packedLight, borderColor);
 		}
 
-		fabric.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-		clipsBody.get(backpackItem).render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
-
-		cloth.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, clothColor);
-
-		border.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, borderColor);
+		submit(collector, fabric, poseStack, packedLight, -1);
+		submit(collector, clipsBody.get(backpackItem), poseStack, packedLight, -1);
+		submit(collector, cloth, poseStack, packedLight, clothColor);
+		submit(collector, border, poseStack, packedLight, borderColor);
 
 		poseStack.pushPose();
 		poseStack.scale(1 / 2f, 6 / 10f, 1 / 2f);
 		if (showLeftTank) {
-			vertexBuilder = buffer.getBuffer(RenderType.entityCutoutNoCull(TANK_GLASS_TEXTURE));
-			leftTankGlass.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
+			submit(collector, leftTankGlass, poseStack, packedLight, -1, TANK_GLASS_TEXTURE, false);
 		}
 		if (showRightTank) {
-			vertexBuilder = buffer.getBuffer(RenderType.entityCutoutNoCull(TANK_GLASS_TEXTURE));
-			rightTankGlass.render(poseStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
+			submit(collector, rightTankGlass, poseStack, packedLight, -1, TANK_GLASS_TEXTURE, false);
 		}
 		if (showLeftTank) {
 			IRenderedTankUpgrade.TankRenderInfo tankRenderInfo = renderInfo.getTankRenderInfos().get(TankPosition.LEFT);
-			tankRenderInfo.getFluid().ifPresent(f -> renderFluid(poseStack, buffer, packedLight, f, tankRenderInfo.getFillRatio(), true));
+			tankRenderInfo.getFluid().ifPresent(f -> submitFluid(poseStack, collector, packedLight, f, tankRenderInfo.getFillRatio(), true));
 		}
 		if (showRightTank) {
 			IRenderedTankUpgrade.TankRenderInfo tankRenderInfo = renderInfo.getTankRenderInfos().get(TankPosition.RIGHT);
-			tankRenderInfo.getFluid().ifPresent(f -> renderFluid(poseStack, buffer, packedLight, f, tankRenderInfo.getFillRatio(), false));
+			tankRenderInfo.getFluid().ifPresent(f -> submitFluid(poseStack, collector, packedLight, f, tankRenderInfo.getFillRatio(), false));
 		}
 		poseStack.popPose();
 		if (batteryRenderInfo.isPresent()) {
-			batteryRenderInfo.ifPresent(info -> renderBatteryCharge(poseStack, buffer, packedLight, info.getChargeRatio()));
+			batteryRenderInfo.ifPresent(info -> submitBatteryCharge(poseStack, collector, packedLight, info.getChargeRatio()));
 		}
 	}
 
 	@Override
-	public void renderBatteryCharge(PoseStack matrixStack, MultiBufferSource buffer, int packedLight, float chargeRatio) {
+	public void submitBatteryCharge(PoseStack matrixStack, SubmitNodeCollector collector, int packedLight, float chargeRatio) {
 		ModelPart charge = batteryCharges.get((int) (chargeRatio * 4));
 		if (charge == null) {
 			return;
 		}
-		VertexConsumer vertexBuilder = buffer.getBuffer(RenderType.entityTranslucent(BACKPACK_ENTITY_TEXTURE));
-		charge.render(matrixStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY);
+		submit(collector, charge, matrixStack, packedLight, -1, BACKPACK_ENTITY_TEXTURE, true);
 	}
 
 	@Override
-	public void renderFluid(PoseStack matrixStack, MultiBufferSource buffer, int packedLight, FluidStack fluidStack, float fill, boolean left) {
+	public void submitFluid(PoseStack matrixStack, SubmitNodeCollector collector, int packedLight, FluidStack fluidStack, float fill, boolean left) {
 		if (Mth.equal(fill, 0.0f)) {
 			return;
 		}
@@ -420,15 +417,33 @@ public class BackpackModel extends AgeableListModel<LivingEntity> implements IBa
 		TextureAtlasSprite still = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(texture);
 		*/
 		FluidVariant fluidVariant = FluidVariant.of(fluidStack.getFluid());
-		TextureAtlasSprite still = FluidVariantRendering.getSprite(fluidVariant);
+		TextureAtlasSprite still = Minecraft.getInstance().getModelManager().getFluidStateModelSet()
+				.get(fluidStack.getFluid().defaultFluidState()).stillMaterial().sprite();
 		if (still == null) {
 			return;
 		}
 
-		VertexConsumer vertexBuilder = buffer.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS));
 		ModelPart fluidBox = getFluidBar(still, (int) (fill * 10), left);
 		int color = FluidVariantRendering.getColor(fluidVariant);
-		fluidBox.render(matrixStack, vertexBuilder, packedLight, OverlayTexture.NO_OVERLAY, color);
+		submit(collector, fluidBox, matrixStack, packedLight, color, TextureAtlas.LOCATION_BLOCKS, true);
+	}
+
+	public void getExtents(java.util.function.Consumer<org.joml.Vector3fc> consumer) {
+		root.getExtentsForGui(new PoseStack(), consumer);
+	}
+
+	private static void submit(SubmitNodeCollector collector, ModelPart part, PoseStack poseStack, int light, int color) {
+		submit(collector, part, poseStack, light, color, BACKPACK_ENTITY_TEXTURE, false);
+	}
+
+	private static void submit(SubmitNodeCollector collector, ModelPart part, PoseStack poseStack, int light, int color, Identifier texture, boolean translucent) {
+		collector.submitModel(new PartModel(part, translucent), Unit.INSTANCE, poseStack, texture, light, OverlayTexture.NO_OVERLAY, color, null);
+	}
+
+	private static final class PartModel extends net.minecraft.client.model.Model<Unit> {
+		private PartModel(ModelPart part, boolean translucent) {
+			super(new ModelPart(List.of(), Map.of("part", part)), translucent ? RenderTypes::entityTranslucent : RenderTypes::entityCutout);
+		}
 	}
 
 	private ModelPart getFluidBar(TextureAtlasSprite still, int fill, boolean left) {
@@ -457,7 +472,7 @@ public class BackpackModel extends AgeableListModel<LivingEntity> implements IBa
 	}
 
 	@Override
-	public <L extends LivingEntity, M extends EntityModel<L>> void translateRotateAndScale(M parentModel, LivingEntity livingEntity, PoseStack poseStack, boolean wearsArmor) {
+	public void translateRotateAndScale(EntityModel<?> parentModel, LivingEntity livingEntity, PoseStack poseStack, boolean wearsArmor) {
 		if (parentModel instanceof HumanoidModel<?> humanoidModel) {
 			humanoidModel.body.translateAndRotate(poseStack);
 		}
@@ -550,23 +565,4 @@ public class BackpackModel extends AgeableListModel<LivingEntity> implements IBa
 		);
 	}
 
-	@Override
-	public void renderToBuffer(PoseStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-		//noop
-	}
-
-	@Override
-	protected Iterable<ModelPart> headParts() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	protected Iterable<ModelPart> bodyParts() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public void setupAnim(LivingEntity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-		//noop
-	}
 }

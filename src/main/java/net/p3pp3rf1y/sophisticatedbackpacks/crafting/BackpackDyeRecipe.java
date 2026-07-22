@@ -14,12 +14,16 @@ import net.p3pp3rf1y.sophisticatedcore.util.ColorHelper;
 import java.util.List;
 
 public class BackpackDyeRecipe extends StorageDyeRecipeBase {
+	public BackpackDyeRecipe() {
+		this(CraftingBookCategory.MISC);
+	}
+
 	public BackpackDyeRecipe(CraftingBookCategory category) {
 		super(category);
 	}
 
 	@Override
-	public RecipeSerializer<?> getSerializer() {
+	public RecipeSerializer<BackpackDyeRecipe> getSerializer() {
 		return ModItems.BACKPACK_DYE_RECIPE_SERIALIZER.get();
 	}
 
