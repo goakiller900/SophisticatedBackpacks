@@ -123,7 +123,16 @@ public class ModItems {
 	}
 
 	private static Item.Properties itemProperties(String name) {
-		return new Item.Properties().setId(ResourceKey.create(Registries.ITEM, SophisticatedBackpacks.getRL(name)));
+		/*
+		 * 26.2 derives an item's default description id from the id stored on
+		 * Item.Properties.  Keep that id and the translation id explicit here:
+		 * unlike 1.21, an Item is constructed before the registry assigns its
+		 * intrusive holder, so relying on the later registry lookup can make
+		 * several otherwise distinct entries share the first description id.
+		 */
+		return new Item.Properties()
+				.setId(ResourceKey.create(Registries.ITEM, SophisticatedBackpacks.getRL(name)))
+				.overrideDescription("item." + SophisticatedBackpacks.MOD_ID + "." + name);
 	}
 
 	public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(BuiltInRegistries.ITEM, SophisticatedBackpacks.MOD_ID);
