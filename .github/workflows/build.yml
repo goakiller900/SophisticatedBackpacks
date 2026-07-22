@@ -167,10 +167,12 @@ jobs:
         shell: bash
         run: |
           # Remove the old rolling release and its tag so the new tag always
-          # points at the exact commit that produced these JARs.
-          gh release delete "$ROLLING_TAG" --yes --cleanup-tag 2>/dev/null || true
+          # points at the exact commit that produced these JARs. The first run
+          # is expected to find nothing to delete.
+          gh release delete "$ROLLING_TAG" --repo goakiller900/SophisticatedBackpacks --yes --cleanup-tag 2>/dev/null || true
 
           gh release create "$ROLLING_TAG" workspace/SophisticatedBackpacks/build/libs/*.jar \
+            --repo goakiller900/SophisticatedBackpacks \
             --target "$GITHUB_SHA" \
             --title "SophisticatedBackpacks ${MINECRAFT_VERSION} - Latest Build" \
             --notes "Automated rolling build of SophisticatedBackpacks ${MINECRAFT_VERSION}-${MOD_VERSION}. Actions build ${GITHUB_RUN_NUMBER}, commit ${GITHUB_SHA}. This release is replaced after every successful build of 1.21.x-fabric."
