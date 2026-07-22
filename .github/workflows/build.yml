@@ -49,10 +49,22 @@ jobs:
           chmod +x workspace/SophisticatedCore/gradlew
           chmod +x workspace/SophisticatedBackpacks/gradlew
 
-      # Backpacks relies on Loom injected interfaces declared by Core in
-      # fabric.mod.json. A Gradle composite source substitution does not expose
-      # those injected interfaces to Backpacks' Minecraft compile classpath in
-      # CI, so build the real Core mod JAR and publish it to Maven Local first.
+      # Core's Gradle version is generated as:
+      #   <minecraft_version>-<mod_version>.<GITHUB_RUN_NUMBER>
+      # Publish that exact build to Maven Local, then force Backpacks to use the
+      # exact local version. This avoids resolving the dynamic Core version range
+      # against the old authenticated GitHub Packages repository.
+      - name: Determine SophisticatedCore CI version
+        id: core-version
+        working-directory: workspace/SophisticatedCore
+        shell: bash
+        run: |
+          CORE_MC_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
+          CORE_MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '\r')
+          CORE_VERSION="${CORE_MC_VERSION}-${CORE_MOD_VERSION}.${GITHUB_RUN_NUMBER}"
+          echo "core_version=${CORE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using SophisticatedCore version: ${CORE_VERSION}"
+
       - name: Build and publish SophisticatedCore locally
         working-directory: workspace/SophisticatedCore
         env:
@@ -66,7 +78,7 @@ jobs:
         env:
           USERNAME: ${{ github.actor }}
           READ_PACKAGES_TOKEN: ${{ secrets.READ_PACKAGES_TOKEN || github.token }}
-        run: ./gradlew clean build --stacktrace
+        run: ./gradlew clean build -Psc_version=${{ steps.core-version.outputs.core_version }} --stacktrace
 
       - name: List generated JARs
         if: success()
