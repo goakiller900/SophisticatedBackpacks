@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * loader baked mutable quads per stack; special models are the supported place
  * to submit that stack-dependent geometry now.
  */
-public final class BackpackDynamicModel implements SpecialModelRenderer<ItemStack> {
+public final class BackpackDynamicModel implements SpecialModelRenderer<BackpackDynamicModel.RenderData> {
 	private final BackpackModel model;
 
 	private BackpackDynamicModel(BackpackModel model) {
@@ -29,19 +29,21 @@ public final class BackpackDynamicModel implements SpecialModelRenderer<ItemStac
 	}
 
 	@Override
-	public ItemStack extractArgument(ItemStack stack) {
-		return stack;
+	public RenderData extractArgument(ItemStack stack) {
+		ItemStack stackSnapshot = stack.copy();
+		IBackpackWrapper wrapper = BackpackWrapper.fromStack(stackSnapshot);
+		return new RenderData(stackSnapshot, wrapper.getRenderInfo(), wrapper.getMainColor(), wrapper.getAccentColor());
 	}
 
 	@Override
-	public void submit(ItemStack stack, PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, boolean foil, int outlineColor) {
-		IBackpackWrapper wrapper = BackpackWrapper.fromStack(stack);
-		RenderInfo renderInfo = wrapper.getRenderInfo();
-		model.submit(poseStack, collector, light, wrapper.getMainColor(), wrapper.getAccentColor(), stack.getItem(), renderInfo);
-		renderDisplayedItem(poseStack, collector, light, overlay, renderInfo);
+	public void submit(RenderData data, PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, boolean foil, int outlineColor) {
+		IBackpackModel selectedModel = BackpackModelManager.getBackpackModel(data.stack().getItem());
+		selectedModel.submitSpecial(poseStack, collector, light, overlay, foil, outlineColor,
+				data.mainColor(), data.accentColor(), data.stack().getItem(), data.renderInfo());
+		renderDisplayedItem(poseStack, collector, light, overlay, outlineColor, data.renderInfo());
 	}
 
-	private static void renderDisplayedItem(PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, RenderInfo renderInfo) {
+	private static void renderDisplayedItem(PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, int outlineColor, RenderInfo renderInfo) {
 		renderInfo.getItemDisplayRenderInfo().getDisplayItem().ifPresent(displayItem -> {
 			poseStack.pushPose();
 			poseStack.translate(0.5, 0.6, 0.25);
@@ -50,7 +52,7 @@ public final class BackpackDynamicModel implements SpecialModelRenderer<ItemStac
 			ItemStackRenderState itemState = new ItemStackRenderState();
 			Minecraft minecraft = Minecraft.getInstance();
 			minecraft.getItemModelResolver().updateForTopItem(itemState, displayItem.getItem(), ItemDisplayContext.FIXED, minecraft.level, null, 0);
-			itemState.submit(poseStack, collector, light, overlay, 0);
+			itemState.submit(poseStack, collector, light, overlay, outlineColor);
 			poseStack.popPose();
 		});
 	}
@@ -60,7 +62,9 @@ public final class BackpackDynamicModel implements SpecialModelRenderer<ItemStac
 		model.getExtents(consumer);
 	}
 
-	public record Unbaked() implements SpecialModelRenderer.Unbaked<ItemStack> {
+	public record RenderData(ItemStack stack, RenderInfo renderInfo, int mainColor, int accentColor) {}
+
+	public record Unbaked() implements SpecialModelRenderer.Unbaked<RenderData> {
 		public static final Unbaked INSTANCE = new Unbaked();
 		public static final MapCodec<Unbaked> MAP_CODEC = MapCodec.unit(INSTANCE);
 

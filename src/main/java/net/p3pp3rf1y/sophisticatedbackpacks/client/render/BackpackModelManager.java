@@ -28,6 +28,9 @@ public class BackpackModelManager {
 
 		@Override
 		public IBackpackModel getBackpackModel(Item backpackItem) {
+			if (model == null) {
+				initModels();
+			}
 			return model;
 		}
 	};

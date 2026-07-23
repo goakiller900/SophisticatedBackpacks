@@ -5,8 +5,8 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.entity.LivingEntity;
+import net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState;
 import net.p3pp3rf1y.sophisticatedbackpacks.client.render.BackpackRenderData;
-import net.p3pp3rf1y.sophisticatedbackpacks.client.render.BackpackRenderStateAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +17,7 @@ public class LivingEntityRendererMixin {
 	@Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("TAIL"))
 	private void sophisticatedbackpacks$extractBackpackRenderData(LivingEntity entity, LivingEntityRenderState state, float partialTick, CallbackInfo ci) {
 		BackpackRenderData data = BackpackRenderData.capture(entity);
-		((BackpackRenderStateAccess) state).sophisticatedbackpacks$setBackpackRenderData(data);
+		((FabricRenderState) state).setData(BackpackRenderData.RENDER_STATE_KEY, data);
 		if (data == null) {
 			return;
 		}
