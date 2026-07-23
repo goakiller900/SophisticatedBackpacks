@@ -18,14 +18,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Unit;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.phys.Vec3;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.p3pp3rf1y.sophisticatedcore.fluid.FluidStack;
@@ -40,18 +37,10 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 public class BackpackModel implements IBackpackModel {
-	private static final Map<EntityType<?>, Vec3> entityTranslations;
-
-	static {
-		entityTranslations = new HashMap<>();
-		entityTranslations.put(EntityTypes.ENDERMAN, new Vec3(0, -0.8, 0));
-	}
-
 	private static final Identifier BACKPACK_ENTITY_TEXTURE = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/backpack.png");
 	private static final Identifier TANK_GLASS_TEXTURE = Identifier.fromNamespaceAndPath(SophisticatedBackpacks.MOD_ID, "textures/entity/tank_glass.png");
-	public static final float CHILD_Y_OFFSET = 0.3F;
-	public static final float CHILD_Z_OFFSET = 0.1F;
-	public static final float CHILD_SCALE = 0.55F;
+	private static final float BABY_BODY_SCALE = 0.5F;
+	private static final float BABY_BODY_Y_OFFSET = 1.5F;
 
 	private static final String CLOTH_PART = "cloth";
 	private static final String RIGHT_POUCHES_BORDER_PART = "rightPouchesBorder";
@@ -474,32 +463,17 @@ public class BackpackModel implements IBackpackModel {
 	@Override
 	public void translateRotateAndScale(EntityModel<?> parentModel, LivingEntity livingEntity, PoseStack poseStack, boolean wearsArmor) {
 		if (parentModel instanceof HumanoidModel<?> humanoidModel) {
+			if (livingEntity.isBaby() && !(livingEntity instanceof Player)) {
+				poseStack.scale(BABY_BODY_SCALE, BABY_BODY_SCALE, BABY_BODY_SCALE);
+				poseStack.translate(0.0F, BABY_BODY_Y_OFFSET, 0.0F);
+			}
 			humanoidModel.body.translateAndRotate(poseStack);
 		}
 
 		poseStack.mulPose(Axis.YP.rotationDegrees(180));
+		poseStack.mulPose(Axis.ZP.rotationDegrees(180));
 		float zOffset = wearsArmor ? -0.35f : -0.3f;
-		float yOffset = -0.75f;
-
-		if (livingEntity.isBaby()) {
-			zOffset += CHILD_Z_OFFSET;
-			yOffset = CHILD_Y_OFFSET;
-		}
-
-		poseStack.translate(0, yOffset, zOffset);
-
-		if (livingEntity instanceof Player) {
-			return;
-		}
-
-		if (livingEntity.isBaby()) {
-			poseStack.scale(CHILD_SCALE, CHILD_SCALE, CHILD_SCALE);
-		}
-
-		if (entityTranslations.containsKey(livingEntity.getType())) {
-			Vec3 translVector = entityTranslations.get(livingEntity.getType());
-			poseStack.translate(translVector.x(), translVector.y(), translVector.z());
-		}
+		poseStack.translate(0, -0.25f, zOffset);
 	}
 
 	private record FluidBarCacheKey(int u, int v, int fill) {

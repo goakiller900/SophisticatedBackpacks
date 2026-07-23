@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 
@@ -18,6 +17,9 @@ import net.minecraft.world.entity.EntityTypes;
  * submitted, so no live entity is accessed from rendering.
  */
 public class BackpackLayerRenderer<S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends RenderLayer<S, M> {
+	private static final float BABY_BODY_SCALE = 0.5F;
+	private static final float BABY_BODY_Y_OFFSET = 1.5F;
+
 	public BackpackLayerRenderer(RenderLayerParent<S, M> parent) {
 		super(parent);
 		BackpackModelManager.initModels();
@@ -41,21 +43,17 @@ public class BackpackLayerRenderer<S extends LivingEntityRenderState, M extends 
 
 	private static void translate(EntityModel<?> parentModel, BackpackRenderData data, PoseStack poseStack) {
 		if (parentModel instanceof HumanoidModel<?> humanoidModel) {
+			// Match the upstream layer's body-space transform. Players do not use
+			// the non-player baby-model adjustment.
+			if (data.baby() && !data.entityType().equals(EntityType.getKey(EntityTypes.PLAYER))) {
+				poseStack.scale(BABY_BODY_SCALE, BABY_BODY_SCALE, BABY_BODY_SCALE);
+				poseStack.translate(0.0F, BABY_BODY_Y_OFFSET, 0.0F);
+			}
 			humanoidModel.body.translateAndRotate(poseStack);
 		}
 		poseStack.mulPose(Axis.YP.rotationDegrees(180));
+		poseStack.mulPose(Axis.ZP.rotationDegrees(180));
 		float zOffset = data.wearsArmor() ? -0.35F : -0.3F;
-		float yOffset = -0.75F;
-		if (data.baby()) {
-			zOffset += BackpackModel.CHILD_Z_OFFSET;
-			yOffset = BackpackModel.CHILD_Y_OFFSET;
-		}
-		poseStack.translate(0, yOffset, zOffset);
-		if (data.baby()) {
-			poseStack.scale(BackpackModel.CHILD_SCALE, BackpackModel.CHILD_SCALE, BackpackModel.CHILD_SCALE);
-		}
-		if (data.entityType().equals(EntityType.getKey(EntityTypes.ENDERMAN))) {
-			poseStack.translate(0, -0.8, 0);
-		}
+		poseStack.translate(0, -0.25F, zOffset);
 	}
 }
