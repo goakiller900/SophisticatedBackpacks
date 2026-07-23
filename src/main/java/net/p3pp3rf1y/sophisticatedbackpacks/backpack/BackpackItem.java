@@ -6,7 +6,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,7 +28,6 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -276,17 +274,6 @@ public class BackpackItem extends ItemBase implements IStashStorageItem {
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
-		/* Item.use's 26.2 default equipment handling is bypassed by this
-		 * custom menu action.  Crouch-right-click therefore provides the
-		 * native chest-slot swap while ordinary right-click still opens the
-		 * backpack. */
-		if (player.isShiftKeyDown()) {
-			Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
-			if (equippable != null) {
-				return equippable.swapWithEquipmentSlot(stack, player);
-			}
-		}
-
 		if (!level.isClientSide()) {
 			String handlerName = hand == InteractionHand.MAIN_HAND ? PlayerInventoryProvider.MAIN_INVENTORY : PlayerInventoryProvider.OFFHAND_INVENTORY;
 			int slot = hand == InteractionHand.MAIN_HAND ? player.getInventory().getSelectedSlot() : 0;

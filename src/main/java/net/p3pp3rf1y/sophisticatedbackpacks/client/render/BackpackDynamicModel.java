@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.BackpackWrapper;
@@ -46,6 +45,12 @@ public final class BackpackDynamicModel implements SpecialModelRenderer<Backpack
 	private static void renderDisplayedItem(PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay, int outlineColor, RenderInfo renderInfo) {
 		renderInfo.getItemDisplayRenderInfo().getDisplayItem().ifPresent(displayItem -> {
 			poseStack.pushPose();
+			/* The item definition converts the entity ModelPart coordinates to
+			 * the old block/item coordinate system for the backpack geometry and
+			 * extents.  Cancel that conversion before applying the displayed
+			 * item's existing block-space anchor. */
+			poseStack.scale(-1, -1, 1);
+			poseStack.translate(-0.5, -1.5, -0.5);
 			poseStack.translate(0.5, 0.6, 0.25);
 			poseStack.scale(0.5F, 0.5F, 0.5F);
 			poseStack.mulPose(Axis.ZP.rotationDegrees(displayItem.getRotation()));

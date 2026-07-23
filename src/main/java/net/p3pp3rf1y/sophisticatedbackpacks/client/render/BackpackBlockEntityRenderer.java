@@ -13,17 +13,14 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackBlock;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.BackpackBlockEntity;
 import net.p3pp3rf1y.sophisticatedbackpacks.backpack.wrapper.IBackpackWrapper;
 import net.p3pp3rf1y.sophisticatedcore.renderdata.RenderInfo;
-import net.p3pp3rf1y.sophisticatedcore.renderdata.TankPosition;
-import net.p3pp3rf1y.sophisticatedcore.upgrades.IRenderedTankUpgrade;
 
-/** Renders the dynamic contents over the native block-state backpack model. */
+/** Renders the complete stack-aware backpack model for a placed backpack. */
 public class BackpackBlockEntityRenderer implements BlockEntityRenderer<BackpackBlockEntity, BackpackBlockEntityRenderer.State> {
 	public BackpackBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
 		BackpackModelManager.initModels(context);
@@ -39,18 +36,14 @@ public class BackpackBlockEntityRenderer implements BlockEntityRenderer<Backpack
 		BlockEntityRenderer.super.extractRenderState(blockEntity, state, partialTick, cameraPos, crumblingOverlay);
 		BlockState blockState = blockEntity.getBlockState();
 		state.facing = blockState.getValue(BackpackBlock.FACING);
-		state.showLeftTank = blockState.getValue(BackpackBlock.LEFT_TANK);
-		state.showRightTank = blockState.getValue(BackpackBlock.RIGHT_TANK);
-		state.showBattery = blockState.getValue(BackpackBlock.BATTERY);
 		IBackpackWrapper wrapper = blockEntity.getBackpackWrapper();
 		state.backpack = wrapper.getBackpack().copy();
 		state.renderInfo = wrapper.getRenderInfo();
 		state.mainColor = wrapper.getMainColor();
 		state.accentColor = wrapper.getAccentColor();
-		state.level = blockEntity.getLevel();
 		state.displayItem.clear();
 		state.renderInfo.getItemDisplayRenderInfo().getDisplayItem().ifPresent(displayItem ->
-			Minecraft.getInstance().getItemModelResolver().updateForTopItem(state.displayItem, displayItem.getItem(), ItemDisplayContext.FIXED, state.level, null, 0));
+			Minecraft.getInstance().getItemModelResolver().updateForTopItem(state.displayItem, displayItem.getItem(), ItemDisplayContext.FIXED, blockEntity.getLevel(), null, 0));
 	}
 
 	@Override
@@ -63,28 +56,15 @@ public class BackpackBlockEntityRenderer implements BlockEntityRenderer<Backpack
 		poseStack.translate(0.5, 0, 0.5);
 		poseStack.mulPose(Axis.YN.rotationDegrees(state.facing.toYRot()));
 		poseStack.pushPose();
-		poseStack.scale(0.6F, 0.6F, 0.6F);
+		/* The entity-style ModelPart root is at y=24/16 with inverted X/Y
+		 * compared to the former block-model geometry.  This is the exact
+		 * conversion back to block coordinates; the old 0.6/-2.5 transform
+		 * applied only to the legacy fluid overlay. */
+		poseStack.mulPose(Axis.YP.rotationDegrees(180));
 		poseStack.mulPose(Axis.ZP.rotationDegrees(180));
-		poseStack.translate(0, -2.5, 0);
+		poseStack.translate(0, -1.5, 0);
 		model.submit(poseStack, collector, state.lightCoords, state.mainColor, state.accentColor, state.backpack.getItem(), state.renderInfo);
-		if (state.showLeftTank) {
-			submitTank(model, poseStack, collector, state.lightCoords, state.renderInfo, TankPosition.LEFT, true);
-		}
-		if (state.showRightTank) {
-			submitTank(model, poseStack, collector, state.lightCoords, state.renderInfo, TankPosition.RIGHT, false);
-		}
 		poseStack.popPose();
-		if (state.showBattery) {
-			state.renderInfo.getBatteryRenderInfo().ifPresent(info -> {
-				if (info.getChargeRatio() > 0.1F) {
-					poseStack.pushPose();
-					poseStack.mulPose(Axis.XN.rotationDegrees(180));
-					poseStack.translate(0, -1.5, 0);
-					model.submitBatteryCharge(poseStack, collector, state.lightCoords, info.getChargeRatio());
-					poseStack.popPose();
-				}
-			});
-		}
 		if (!state.displayItem.isEmpty()) {
 			poseStack.pushPose();
 			poseStack.translate(0, 0.6, 0.25);
@@ -97,27 +77,12 @@ public class BackpackBlockEntityRenderer implements BlockEntityRenderer<Backpack
 		poseStack.popPose();
 	}
 
-	private static void submitTank(IBackpackModel model, PoseStack poseStack, SubmitNodeCollector collector, int light, RenderInfo renderInfo, TankPosition position, boolean left) {
-		IRenderedTankUpgrade.TankRenderInfo tankInfo = renderInfo.getTankRenderInfos().get(position);
-		if (tankInfo == null) {
-			return;
-		}
-		poseStack.pushPose();
-		poseStack.translate(left ? 1.45 : -1.45, 0, 0);
-		tankInfo.getFluid().ifPresent(fluid -> model.submitFluid(poseStack, collector, light, fluid, tankInfo.getFillRatio(), left));
-		poseStack.popPose();
-	}
-
 	public static class State extends BlockEntityRenderState {
 		private Direction facing = Direction.NORTH;
-		private boolean showLeftTank;
-		private boolean showRightTank;
-		private boolean showBattery;
 		private ItemStack backpack = ItemStack.EMPTY;
 		private RenderInfo renderInfo;
 		private int mainColor;
 		private int accentColor;
-		private Level level;
 		private final ItemStackRenderState displayItem = new ItemStackRenderState();
 	}
 }
